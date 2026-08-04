@@ -126,12 +126,13 @@ def build(s, bar0, cycle, ch):
         s.note(V1, p0, 62, bt(bar) + 3.5, 0.2)
         s.note(V1, p1, 62, bt(bar) + 3.75, 0.2)
 
-    # m18(rel 15)回环:尾 4 个 16 分降力(3.0 重音保留但轻,衔接 m3)
+    # m18(rel 15,D 小节)回环:用 D 和弦 pattern(原 Em pattern 的 43 与 D 层 54 大七度),
+    # 尾 4 个 16 分降力(3.0 重音保留但轻,衔接 m3 Em)
     for k in range(16):
         v = 102 + (10 if k in (0, 6, 12) else 0)
         if k >= 12:
             v -= 10
-        s.note(B, BASS_P1['Em'][k], v, bt(bar0 + 15) + k * 0.25, 0.24)
+        s.note(B, BASS_P1['D'][k], v, bt(bar0 + 15) + k * 0.25, 0.24)
 
     return bar0 + 16
 
