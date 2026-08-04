@@ -34,19 +34,20 @@ M2 = {
     'D':  (62, 66, 69, 66),   # D4 F#4 A4 F#4
 }
 M3_PITCH = {'Em': 59, 'D': 62}   # M3 齐击:和弦 5 音/根音(与刺刀同源)
-M2_SLOTS = (0.75, 1.25, 2.75, 3.25)   # 互锁位:填补 bass/hook 空隙
-BRASS_VEL = (80, 88, 78, 88)
 
-# Hook 稀疏点缀表(v7.1 用户决策:合成器 = 总旋律的辅助,重心在贝斯)
-# 每和弦 4 槽音高(0.5 / 2.0 / 2.5 / 3.5 拍),E 小调五声高区,全部与长音/刺刀 ≥2 半音
-# 小节用法:bar1(0.5,3.5) bar2(0.5,2.5) bar3(0.5,2.0,3.5) bar4(0.5,3.5)
-HOOK_DOT = {
-    'Em': (79, 78, 76, 76),   # A5 G5 E5 E5
-    'C':  (79, 76, 72, 72),   # G5 E5 C5 C5
-    'G':  (79, 76, 74, 74),   # G5 E5 D5 D5
-    'D':  (78, 74, 71, 71),   # F#5 D5 B4 B4
+# Hook 乐句 v8.2(用户诊断:碎片点缀 = 门铃感/旋律怪;改为'句法化长音句'):
+# 每轮 4 小节一句:bar1 长音(3.5,0.8 拍喘息)→ bar2 短音(2.5,让位 bass 应答)→
+# bar3 短句(0.5/2.0 + 3.5 长音)→ bar4 短收(3.5)。音高随和弦五声、下行倾向,
+# 轮 2/4 句头换五声高音(防机械)。
+HOOK_PHRASE = {
+    'Em': {'bar1': 76, 'bar2': 74, 'bar3': (79, 78, 76), 'bar4': 74},
+    'C':  {'bar1': 72, 'bar2': 74, 'bar3': (79, 76, 72), 'bar4': 74},
+    'G':  {'bar1': 71, 'bar2': 74, 'bar3': (79, 76, 71), 'bar4': 74},
+    'D':  {'bar1': 69, 'bar2': 71, 'bar3': (78, 74, 69), 'bar4': 71},
 }
-HOOK_DOT_VEL = (72, 72, 66, 72)   # 辅助层力度(不越互锁阈值);rel 15 再 -8
+HOOK_HIGH = {'Em': 81, 'C': 77, 'G': 79, 'D': 78}   # 轮2/4 句头高音(五声)
+HOOK_LONG_VEL = 76    # 长音(喘息点),+BOOST 后 <84 不越互锁阈值
+HOOK_SHORT_VEL = 66
 
 # 节奏层切分和弦(57-64 带;v7 和谐修正:M2 降至 57/58 后,各小节避开其±1)
 # 节奏层切分和弦(57-64 带;v8 修正:C 小节原 (62,64) = 大七度(尖锐),改纯五度 (60,67))
@@ -105,22 +106,28 @@ def build(s, bar0, cycle, ch):
         s.chord('synth_pad', CHOIR_VOICE[cname], 42, beat(rel, 0.0), dur)
         s.chord('choir', CHOIR_VOICE[cname], 50, beat(rel, 0.0), dur)
 
-    # ---------------- brass 刺刀全程(和弦分解,轮次力度波,整体 -4 让出主位)+ M3 ----------------
-    BRASS_WAVE = ((76, 84, 74, 84), (80, 88, 78, 88), (84, 92, 82, 92), (80, 88, 78, 88))
+    # ---------------- brass 刺刀乐句(v8.2:密度 2/4/3/2 松紧 + 轮次力度波,不再门铃) ----------------
+    # 每轮:bar1 两音动机头 → bar2 满 4 音(推进)→ bar3 三音(展开)→ bar4 两音收(让位 M3/riser)
+    STAB_SLOTS = ((0.75, 1.25), (0.75, 1.25, 2.75, 3.25), (0.75, 1.25, 2.75), (0.75, 1.25))
+    STAB_BASE = ((76, 84), (80, 88, 78, 88), (80, 88, 78), (76, 84))
+    STAB_OFF = (0, 4, 8, 4)                    # 轮次力度波
     for rel in range(16):
         cname = CHORDS16[rel]
         cell = M2[cname]
-        bvel = BRASS_WAVE[rel // 4]
-        for i, b in enumerate(M2_SLOTS):
-            s.note('brass_stab', cell[i], bvel[i], beat(rel, b), 0.35)
+        off = STAB_OFF[rel // 4]
+        for i, b in enumerate(STAB_SLOTS[rel % 4]):
+            s.note('brass_stab', cell[i], STAB_BASE[rel % 4][i] + off, beat(rel, b), 0.35)
     for rel in (3, 7, 11):
         s.note('brass_stab', M3_PITCH[CHORDS16[rel]], 96, beat(rel, 3.0), 0.3)   # M3 齐奏(与 timpani/kick/bass)
 
-    # ---------------- rhythm 节奏层全程(轮 2/4 切分整体后移 0.25,防机械) ----------------
+    # ---------------- rhythm 节奏层全程(轮 2/4 切分后移 0.25;bar4 减为 2 落点让位 M3/riser) ----------------
     RHY_SLOTS2 = (0.5, 1.25, 2.25, 3.25)
     for rel in range(16):
         cname = CHORDS16[rel]
-        slots = RHY_SLOTS2 if (rel // 4) % 2 == 1 else RHY_SLOTS
+        if rel % 4 == 3:
+            slots = (0.25, 2.0)
+        else:
+            slots = RHY_SLOTS2 if (rel // 4) % 2 == 1 else RHY_SLOTS
         for b in slots:
             s.chord('synth_rhythm', RHY_CHORD[cname], 70, beat(rel, b), 0.25)
 
@@ -138,24 +145,26 @@ def build(s, bar0, cycle, ch):
         for j, p in enumerate(RISER[cname]):
             s.note('fx', p, RISER_VEL[j], beat(rel, 2.0 + j * 0.25), 0.22)
 
-    # ---------------- hook 稀疏点缀(辅助层;轮 2/4 的 0.5 槽上挑 +2 音,防机械) ----------------
+    # ---------------- hook 乐句(每轮一句:长音喘息 + 五声短句,轮2/4 句头高音) ----------------
     for rel in range(16):
         cname = CHORDS16[rel]
-        d0, d1, d2, d3 = HOOK_DOT[cname]
-        if (rel // 4) % 2 == 1:                       # 轮 2/4:句头上挑
-            d0 = {'Em': 81, 'C': 81, 'G': 81, 'D': 76}[cname]
+        ph = HOOK_PHRASE[cname]
         k = rel % 4
-        if k == 1:
-            slots = ((0.5, d0, 0), (2.5, d2, 2))            # bar2:两音(让位刺刀/应答)
-        elif k == 3:
-            slots = ((0.5, d0, 0), (3.5, d3, 3))            # bar4:首尾(rel15 减力回环)
-        else:
-            slots = ((0.5, d0, 0), (2.0, d1, 1), (3.5, d3, 3))   # bar1/3:三音小句
-        for b, p, slot in slots:
-            v = HOOK_DOT_VEL[slot] + VOICE_BOOST
-            if rel == 15:
-                v -= 8
-            s.note('hook', p, v, beat(rel, b), 0.3)
+        hi = (rel // 4) % 2 == 1                 # 轮 2/4
+        long_vel = HOOK_LONG_VEL + VOICE_BOOST - (8 if rel == 15 else 0)
+        short_vel = HOOK_SHORT_VEL + VOICE_BOOST - (8 if rel == 15 else 0)
+        if k == 0:                               # bar1:句头长音(3.5,喘息)
+            p = HOOK_HIGH[cname] if hi else ph['bar1']
+            s.note('hook', p, long_vel, beat(rel, 3.5), 0.8)
+        elif k == 1:                             # bar2:短音(让位刺刀/bass 应答)
+            s.note('hook', ph['bar2'], short_vel, beat(rel, 2.5), 0.3)
+        elif k == 2:                             # bar3:短句 0.5/2.0 + 句尾长音
+            p3 = ph['bar3']
+            s.note('hook', p3[0], short_vel, beat(rel, 0.5), 0.3)
+            s.note('hook', p3[1], short_vel, beat(rel, 2.0), 0.3)
+            s.note('hook', p3[2], long_vel, beat(rel, 3.5), 0.8)
+        else:                                    # bar4:短收(rel15 减力回环)
+            s.note('hook', ph['bar4'], short_vel, beat(rel, 3.5), 0.3)
 
     return bar0 + 16
 
