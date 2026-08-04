@@ -26,10 +26,10 @@ TR = args.transpose
 TPB = 480
 BPB = 4
 
-# Tempo map:引子96 → A1/A2 132 → B 144 → 插部120(减速对比)→ 高潮138 → 冲刺142-150 → 重击 → 余韵72
+# Tempo map:引子96 → A1/A2 132 → B 144 → 插部120(减速对比)→ 高潮138 → 冲刺142-150 → 重击 → 余韵96→72(渐冷)
 TEMPO = [(1, 96), (9, 132), (25, 132), (41, 144), (57, 120), (73, 138),
          (97, 142), (98, 144), (99, 146), (100, 148), (101, 150),
-         (105, 150), (107, 72)]
+         (105, 150), (107, 96), (109, 72)]
 
 PROGRAMS = {
     0: 0, 1: 47, 2: 48, 3: 61, 4: 52, 5: 49, 6: 33, 7: 30,
@@ -107,6 +107,33 @@ def pattern_light(sb, k=70, h=46):
     for i in range(8):
         drum(HH, h - 8 if i % 2 else h, sb + i * 0.5, 0.12)
     drum(KICK, k, sb); drum(KICK, k - 8, sb + 3)
+
+def pattern_a_nosnare(sb, k=100, h=70):
+    """A 段渐进:无军鼓(进入时先给脉冲,backbeat 后置)"""
+    for i in range(8):
+        drum(HH, h - 16 if i % 2 else h, sb + i * 0.5, 0.12)
+    drum(KICK, k, sb); drum(KICK, k - 8, sb + 2.5); drum(KICK, k - 12, sb + 3.5)
+
+def pattern_b_light(sb, k=96, s=100, h=72):
+    """B 段抽稀版:保留十六分脉冲,去掉切分 snare(转场前先降密度)"""
+    for i in range(16):
+        drum(HH, h - 18 if i % 2 else h, sb + i * 0.25, 0.08)
+    drum(KICK, k, sb); drum(KICK, k - 10, sb + 3)
+    drum(SNARE, s, sb + 2); drum(SNARE, s, sb + 4)
+
+def pattern_strip(sb, h=58, k=86):
+    """抽离版:只剩 HH 四分 + kick 拍 1(鼓点逐步停止的过程)"""
+    for i in range(4):
+        drum(HH, h - 8 if i % 2 else h, sb + i, 0.1)
+    drum(KICK, k, sb)
+
+def fill16(sb, v=100):
+    """十六分填充:后半小节 HH 十六分滚入 + snare→tom 下滚(速度转场预热)"""
+    for i in range(8):
+        drum(HH, v - 20 if i % 2 else v - 8, sb + 2.0 + i * 0.25, 0.08)
+    drum(SNARE, 104, sb + 3.0, 0.12)
+    drum(TOM1, 96, sb + 3.5, 0.14)
+    drum(TOM2, 88, sb + 3.75, 0.16)
 
 def fill(sb, v=104):
     """小节末拍加花:snare 十六分 → tom"""
@@ -345,15 +372,24 @@ multi(6, [(45, 60)], bar(1), 8 * 4)
 multi(5, [(45, 42), (52, 42), (57, 42)], bar(1), 8 * 4)
 for i in range(8):
     note(1, 38, 62, bar(1) + i * 4, 0.15)
-snare_roll(bar(5), 16, 34, 104)
+snare_roll(bar(5), 16, 34, 100)
 note(3, 57, 70, bar(8) + 3, 1.0)
 # 预示碎片(钢琴弱奏,动机先现)
 for t, p, d in [(bar(7), 69, 1.0), (bar(7) + 1, 72, 1.0), (bar(7) + 2, 74, 1.0), (bar(7) + 3, 76, 1.0)]:
     note(0, p, 40, t, d)
+# 转场先现:bar 8 末尾轻 HH 八分 + kick 末拍(节奏预兆,避免鼓组满血突入)
+for i in range(4):
+    drum(HH, 42 if i % 2 else 50, bar(8) + 2 + i * 0.5, 0.12)
+for i in range(4):
+    drum(HH, 46 if i % 2 else 56, bar(9) + i * 0.5, 0.12)
+drum(KICK, 72, bar(8) + 3.5, 0.15)
 
-# A1(9-24,132):主题呈示
+# A1(9-24,132):主题呈示——前 2 小节无军鼓渐进,bar 11 起完整 pattern
 for n in range(9, 25):
-    pattern_a(bar(n))
+    if n in (9, 10):
+        pattern_a_nosnare(bar(n))
+    else:
+        pattern_a(bar(n))
     bass_riff(bar(n), CHORDS[n], 96)
     strings_stab(bar(n), CHORDS[n], 66)
 for seq, v in ((ph1(), 86), (ph2(), 88), (ph3(), 88), (ph4(), 90)):
@@ -370,26 +406,35 @@ for n in range(25, 41):
 for seq, v in ((ph5(), 90), (ph6(), 92), (phA2c(), 92), (phA2d(), 94)):
     for t, p, d in seq:
         note(0, p, v, t, d)
-for n in (32, 40):
+for n in (32,):
     fill(bar(n))
+fill16(bar(40))                      # 十六分预热 → B 段(速度+密度平滑换挡)
 note(3, 56, 88, bar(40) + 3, 1.0)   # 铜管 G#3(E7 三音)预告
 
-# B(41-56,144):推进 + E7 属驻留
-for n in range(41, 57):
+# B(41-56,144):推进 + E7 属驻留——末 2 小节鼓密度抽离,平滑进入插部
+for n in range(41, 55):
     pattern_b(bar(n))
     bass_riff(bar(n), CHORDS[n], 100)
     strings_stab(bar(n), CHORDS[n], 70)
+for n in (55,):
+    pattern_b_light(bar(n))
+    bass_riff(bar(n), CHORDS[n], 92)
+    strings_stab(bar(n), CHORDS[n], 62)
+for n in (56,):
+    pattern_strip(bar(n))
+    bass_riff(bar(n), CHORDS[n], 80)
+    multi(2, [(x, 54) for x in CHORD_TONES[CHORDS[n]]], bar(n), 4.0)
 for seq, v in ((phB1(), 94), (phB2(), 95), (phB3(), 96), (phBend(), 96)):
     for t, p, d in seq:
         note(0, p, v, t, d)
-fill(bar(56))
+prog(2, PIZZ, bar(56) + 3.5)        # 拨弦音色在击奏停止后即刻切换(避免瞬切)
 
 # 插部(57-72,120):对比段——拨弦 + 无鼓留白 + 轻律动
-prog(2, PIZZ, bar(57))              # 切拨弦
 for n in range(57, 65):
     bass_whole(bar(n), CHORDS[n], 55)
     pizz_stab(bar(n), CHORDS[n], 58)
-    multi(4, [(x, 50) for x in CHORD_TONES_LO[CHORDS[n]]], bar(n), 4.0)  # 合唱轻长音
+    if n >= 61:                                      # 合唱延迟进入(先让拨弦独奏)
+        multi(4, [(x, 50) for x in CHORD_TONES_LO[CHORDS[n]]], bar(n), 4.0)
 for seq, v in ((phI1(), 78), (phI2(), 76)):
     for t, p, d in seq:
         note(0, p, v, t, d)
@@ -400,21 +445,24 @@ for n in range(65, 71):
     multi(4, [(x, 58) for x in CHORD_TONES_LO[CHORDS[n]]], bar(n), 4.0)
 for t, p, d in phI3():
     note(0, p, 82, t, d)
-# 留白(71-72)+ 滚奏衔接高潮
+# 留白(71-72)+ 滚奏衔接高潮:末拍低音垫 + crash 落在 73 强拍
 snare_roll(bar(72), 4, 40, 112)
-prog(2, 48, bar(73))                # 切回弦乐
+note(6, 45, 66, bar(72) + 3.5, 0.5)  # 低音预垫(提前抓住新速度)
+prog(2, 48, bar(72) + 2)             # 弦乐音色提前切回(滚奏期间,无听觉断裂)
 
-# 高潮(73-96,138):全奏 + 铜管六度对位
+# 高潮(73-96,138):全奏 + 铜管六度对位——前 2 小节吉他弱档,渐进叠满
 for n in range(73, 97):
     pattern_c(bar(n))
     bass_riff(bar(n), CHORDS[n], 108)
     strings_stab(bar(n), CHORDS[n], 80)
-    guitar_power(bar(n), CHORDS[n], 80)
+    guitar_power(bar(n), CHORDS[n], 72 if n in (73, 74) else 80)
     multi(4, [(x, 72) for x in CHORD_TONES_LO[CHORDS[n]]], bar(n), 4.0)
     multi(3, [(x, 84) for x in CHORD_TONES[CHORDS[n]]], bar(n), 1.0)
     note(3, 57, 90, bar(n) + 3, 0.8)
     if n % 4 == 1:
         drum(CRASH, 104, bar(n), 1.0)
+    if n == 96:
+        fill(bar(96))                                  # 衔接冲刺
 for seq, v in ((phC1(), 100), (phC2(), 102), (phC3(), 103), (phC4(), 100),
                (phC5(), 103), (phC6(), 104)):
     for t, p, d in seq:
@@ -445,8 +493,11 @@ note(1, 38, 106, bar(105), 2.0)
 note(1, 36, 100, bar(105), 2.0)
 multi(3, [(45, 100), (52, 96)], bar(105), 2.0)
 note(0, 81, 104, bar(105), 2.0)
+# 重击延音(bar 106):铜管 + 低音长音渐弱,与余韵重叠(避免骤停后冷启动)
+multi(3, [(45, 56), (52, 52)], bar(106), 4.0)
+note(6, 45, 52, bar(106), 4.0)
 
-# 余韵(107-116,72):战斗后的寂静——drone + 钢琴回声渐弱
+# 余韵(107-116,96→72):战斗后的寂静——drone + 钢琴回声渐弱
 multi(6, [(45, 40)], bar(107), 5 * 4)
 multi(5, [(45, 36), (52, 36), (57, 36)], bar(107), 5 * 4)
 multi(6, [(45, 30)], bar(112), 5 * 4)
@@ -454,13 +505,12 @@ multi(5, [(45, 28), (52, 28), (57, 28)], bar(112), 5 * 4)
 for i, (t, p, d) in enumerate(phOut()):
     note(0, p, max(30, 56 - i * 6), t, d)
 
-# 表情(CC11:乐句级起伏)
-for bn, v in [(1, 50), (9, 74), (13, 80), (17, 84), (21, 88), (25, 90), (29, 94),
+# 表情(CC11:乐句级起伏;转场处斜坡化,不做跳变)
+for bn, v in [(1, 50), (8, 62), (9, 72), (11, 78), (13, 82), (17, 85), (21, 88), (25, 90), (29, 94),
               (33, 96), (37, 98), (41, 100), (45, 104), (49, 106), (53, 108),
-              (57, 58), (61, 66), (65, 78), (69, 86), (71, 80),
+              (55, 102), (56, 92), (57, 58), (61, 66), (65, 78), (69, 86), (71, 78),
               (73, 106), (77, 110), (81, 112), (85, 114), (89, 115), (93, 116),
-              (97, 116), (101, 118), (105, 120),
-              (107, 48), (109, 40), (112, 32), (115, 22)]:
+              (97, 116), (101, 118), (105, 120), (106, 76), (107, 52), (109, 42), (112, 32), (115, 22)]:
     cc(0, 11, v, bar(bn))
     cc(2, 11, v, bar(bn))
 
