@@ -2,8 +2,55 @@
 
 > 本文档记录 ε-bit-ai-composer 当前端到端音乐创作链路:从作曲构思到 MP3 成品。
 > 目标是让任何人在本机(或同类 macOS 环境)用本文档即可复现整条流水线。
+> 含两套栈:§A 战斗曲/游戏配乐栈(当前活跃,combat_extraction)+ §B 深渊系作品栈(早期)。
 
 ---
+
+## §A 战斗曲/游戏配乐技术栈(combat_extraction,当前活跃)
+
+### A.1 母节/子节体系(设计核心)
+
+- **母节 = 游戏高潮段**:168 BPM / E 小调 / Em-C-G-D 循环(无终止式,天然可循环);
+  16 小节 14 层满配(drums/bass/4 弦乐/pad/choir/piano/hook/brass/timpani/rhythm/fx),无档位渐进;
+  内部只做横向乐思(4 轮对话链:句头→回声→刺刀→应答→M3 收束→riser)
+- **子节 = 人格化变体**:起承转合全部留给子节(层开关/密度/力度变形);
+  每子节一个音乐人格(S1 低音入场 / S2 行进警觉 / S4 绝境压迫 / S5 逃亡冲刺 / S6 尘埃落定)
+- **转场 = 插入式过渡小节**(transitions.py):riser(2 小节升档)/ down_fx / roll32 / crash_stop / 和声预挂;
+  衔接矩阵 TRANSITIONS 36 键(9 合法),切换只发生在 4 小节边界,CC11 ≥ 70
+- **创作红线**(用户决策):子节弃用 stab 元素;音高一律母节素材原位;节奏型可新写
+
+### A.2 混音链(5 stems 垂直混音)
+
+| stem | 通道 | 链(ffmpeg) |
+|---|---|---|
+| drums | 9,11 | 瞬态压缩 + volume 1.28 |
+| bass | 6 | highpass 30 + 110Hz +3dB EQ + volume 1.65 + **侧链**(鼓 key,0.08/3/8ms 温柔让位) |
+| strings | 2-5 | highpass 60 + volume 0.75 |
+| stab | 10,12,7,15 | compressor -26dB + volume 0.95(v9 完全辅助化) |
+| atmosphere | 0,1,13,14 | volume 0.7 |
+
+总线:acompressor -16dB + alimiter 0.95。实测占比:bass 主导,stab 垫底(-35.9dB)。
+
+### A.3 渲染链路 v2(自动化)
+
+- **并行渲染**:5 stems 同时渲染(ThreadPool),实测 2.46×,与串行 md5 逐字节一致
+- **增量缓存**:stems/<midbase>/ 按 mid+音色库内容哈希失效,双版仅重渲染差异组
+- **校验门**:渲染后非空/时长下限/未削波;混音后 RMS 区间断言
+- **压码**(encode_mp3.py):采样峰值 -1dB + alimiter=limit=0.891:level=0(**真峰值限幅**,实测 TP ≤ -1.0 dBTP)+ lame q2 + ID3 + ebur128 输出
+- **audit_v7.py 五维**:密度(≥12 层)/ 互锁(重音层同槽 ≤2)/ 碰撞(≤150)/ 占比 / **stab 辅助度**(每圈 ≤110 音、hook≤84、其余≤78)
+- **一键构建**:build_all.sh(母节双版 + 6 子节 + SDC + 连播,约 24s)
+
+### A.4 游戏集成(Godot 4.6,已落地)
+
+- **Music/SFX 总线**(幂等创建);枪声挂 SFX
+- **MusicManager 状态机**:PREPARE(S1 循环)/ BATTLE(母节 5 stems 垂直,loop 双保险)/ CALM(S6 播一遍);0.8s 交叉淡化
+- **时停**:Music 总线低通 800Hz(音乐不变速——变速只给音效,枪声 pitch×0.4 原版已实现)
+- **变奏**:热量 >70% bass/drums +2dB;wave≥4 高波 bass/drums +2.5dB、stab/atmosphere -3dB;击杀 stinger(M3 音头,限流 1.5s)
+- **外部资产**:Blink.pck 静态分析(180 文件)+ gdsdecomp 反编译还原工程(21 脚本)+ Godot 4.6.3 直接 --main-pack 运行(Mac 适配)
+
+---
+
+## §B 深渊系作品技术栈(早期,abyssal_* / nameless / echoes / contrapunctus)
 
 ## 1. 分层总览
 
