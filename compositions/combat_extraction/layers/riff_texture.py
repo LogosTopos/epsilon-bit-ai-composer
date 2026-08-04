@@ -77,14 +77,35 @@ def build(s, bar0, cycle, ch):
     def cc(role, val, rel):
         s.cc(role, 11, val, beat(rel, 0.0))
 
-    # ---------------- 档2(rel 4-7):M2 刺刀 vel 80 ----------------
+    # ---------------- 档1(rel 0-3):氛围垫全程(角色化占比:不闪现) ----------------
+    for role in ROLES:
+        cc(role, 60, 0)
+    for rel in range(0, 4):
+        cname = ['Em', 'Em', 'C', 'D'][rel]
+        s.chord('synth_pad', CHOIR_VOICE[cname], 30, beat(rel, 0.0), 3.9)   # 氛围垫
+        if rel % 2 == 0:
+            r0 = PIANO_ROOT[cname]
+            s.note('piano_bang', r0, 38, beat(rel, 0.0), 0.3)               # 轻击
+            s.note('piano_bang', r0 + 12, 38, beat(rel, 0.0), 0.3)
+
+    # ---------------- 档2(rel 4-7):M2 刺刀 + 吉他轻刺点 + 钢琴每小节 ----------------
+    for rel in range(4, 8):
+        cname = ['Em', 'C', 'G', 'D'][rel - 4]
+        s.chord('synth_pad', CHOIR_VOICE[cname], 40, beat(rel, 0.0), 3.9)
+        s.chord('choir', CHOIR_VOICE[cname], 40, beat(rel, 0.0), 3.9)      # 合唱提前进场
+        s.note('guitar_dist', HOOK[cname][0], 50, beat(rel, 0.0), 0.3)     # 吉他刺点
+        s.note('guitar_dist', HOOK[cname][2], 50, beat(rel, 2.0), 0.3)
+        r0 = PIANO_ROOT[cname]
+        s.note('piano_bang', r0, 52, beat(rel, 0.0), 0.3)
+        s.note('piano_bang', r0 + 12, 52, beat(rel, 0.0), 0.3)
     # 先现:档1 末(m6 beat2.0 起)低力度预击 3 音(避开 3.0 M3 齐击位),切入不突兀
     for i, p in enumerate(M2[0][:3]):
         s.note('brass_stab', p, 55, beat(3, 2.0 + i * 0.5), 0.35)
     cc('brass_stab', 72, 4)
     for rel in range(4, 8):
         for i, p in enumerate(M2[(rel - 4) % 2]):
-            s.note('brass_stab', p, 74, beat(rel, i * 0.5), 0.35)   # 让位贝斯
+            v = 70 + (8 if i == 3 else -4)
+            s.note('brass_stab', p, v, beat(rel, i * 0.5), 0.35)
 
     # ---------------- 档3(rel 8-11):全奏 ----------------
     # 先现:档2 末(m10)铜管低力度预击(2.0/2.5/3.5,避开 3.0 M3 齐击)+ 吉他 2 音预击
@@ -98,10 +119,11 @@ def build(s, bar0, cycle, ch):
     for rel in range(8, 12):
         cname = CHORDS[(rel - 8) % 4]
 
-        # M2 刺刀 vel 90(档3 末小节渐弱)
-        brass_vel = 82 if rel < 11 else 62
+        # M2 刺刀:4 音组尾音重音(vel 组 82/76/76/90),末小节整体渐弱
+        brass_base = 82 if rel < 11 else 60
         for i, p in enumerate(M2[(rel - 8) % 2]):
-            s.note('brass_stab', p, brass_vel, beat(rel, i * 0.5), 0.35)
+            v = brass_base + (8 if i == 3 else -4)
+            s.note('brass_stab', p, v, beat(rel, i * 0.5), 0.35)
 
         # Hook:cycle 0 铺满全 riff;cycle 1 Em 小节微变、其余小节切分刺点
         if cycle == 1 and cname != 'Em':
@@ -111,18 +133,19 @@ def build(s, bar0, cycle, ch):
             hook = list(HOOK[cname])
             if cycle == 1 and cname == 'Em':          # 小节末 2 音降八度
                 hook[6], hook[7] = 64, 66
-            # 力度斜坡:第一小节 70→96 渐入(切入不生硬);末小节 96→70 渐出
+            # 力度:3+3+2 重音分组(8分 [0,1,2][3,4,5][6,7],重音在 0/3/6)——去机械感;
+            # 首小节整体低 10 渐入,末小节渐出
             if rel == 8:
-                ramp = (62, 68, 74, 80, 84, 88, 88, 88)
+                ramp = (84, 74, 74, 84, 74, 74, 84, 72)
             elif rel == 11:
-                ramp = (88, 88, 84, 80, 74, 68, 64, 60)
+                ramp = (84, 74, 74, 84, 74, 74, 84, 66)
             else:
-                ramp = (88,) * 8
+                ramp = (94, 82, 82, 94, 82, 82, 94, 78)
             for i, p in enumerate(hook):
                 s.note('guitar_dist', p, ramp[i], beat(rel, i * 0.5), 0.4)
 
         # 合唱长音 + 合成垫叠置(m11 低力度渐入,m14 渐出)
-        choir_vel = 40 if rel == 8 else (44 if rel == 11 else 50)   # 让位贝斯
+        choir_vel = 44 if rel == 8 else (48 if rel == 11 else 54)
         pad_vel = 30 if rel == 8 else (34 if rel == 11 else 40)
         s.chord('choir', CHOIR_VOICE[cname], choir_vel, beat(rel, 0.0), 3.9)
         s.chord('synth_pad', CHOIR_VOICE[cname], pad_vel, beat(rel, 0.0), 3.9)
@@ -142,6 +165,7 @@ def build(s, bar0, cycle, ch):
         cc(role, 74, 12)
     for rel in (12, 13):
         s.chord('choir', CHOIR_VOICE['Em'], 46, beat(rel, 0.0), 3.9)
+        s.chord('synth_pad', CHOIR_VOICE['Em'], 40, beat(rel, 0.0), 3.9)
         s.note('guitar_dist', HOOK['Em'][0], 60, beat(rel, 0.0), 0.3)
         s.note('guitar_dist', HOOK['Em'][2], 60, beat(rel, 2.0), 0.3)
         r0 = PIANO_ROOT['Em']

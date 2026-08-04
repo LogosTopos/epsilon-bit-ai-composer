@@ -117,9 +117,10 @@ def build(s, bar0, cycle, ch):
         for i, ccv in enumerate(CC11_TIER):
             s.cc(name, 11, ccv, bt(bar0 + i * 4))
 
-    # 档1:主角主题(贝斯领奏)
+    # 档1:主角主题 + 弦乐低力度长音垫(角色化:弦乐不闪现)
     for i, prog in enumerate(TIERS[0]):
         riff_main(bar0 + i, prog, BASS_VEL[0])
+        strchord(bar0 + i, prog, 38, 4.0)
     # 档2:主角主题 + 弦乐 2 拍长音和弦(首小节低力度渐入)
     for i, prog in enumerate(TIERS[1]):
         riff_main(bar0 + 4 + i, prog, BASS_VEL[1])
