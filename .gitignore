@@ -52,3 +52,8 @@ archive/legacy-8bit/examples/
 archive/legacy-8bit/output/
 archive/legacy-8bit/research/external_sources/
 archive/fm-renders/
+
+# infinity_reverse: 中间产物不入库(脚本/MIDI/报告入库)
+compositions/infinity_reverse/audio/
+compositions/infinity_reverse/data/
+compositions/infinity_reverse/plots/

@@ -47,6 +47,7 @@ curl -L -o soundfonts/MuseScore_General.sf2 \
 
 ```
 ├── compositions/          # 作品(每曲一目录:脚本+MIDI+WAV+MP3+说明)
+│   └── infinity_reverse/   # 《Infinity》逆向分析(见该目录 README)
 ├── scripts/
 │   └── verify_render.py   # 渲染链路验证工具
 ├── soundfonts/            # 音色库(大文件,不入库,按上文下载)
