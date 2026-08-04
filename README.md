@@ -8,7 +8,7 @@
 
 | 作品 | 目录 | 说明 |
 |---|---|---|
-| 《深渊之战》Battle in the Abyss | `compositions/abyssal_battle/` | **战斗风格 + BPM 变速叙事**(96→150,冲刺骤停);鼓组/切分/十六分驱动;防削波 limiter 链路 |
+| 《深渊之战》Battle in the Abyss | `compositions/abyssal_battle/` | **战斗风格 + BPM 变速叙事**(96→150,冲刺骤停);完整版 3:52 含插部对比段/属功能/对位/余韵收束;防削波 limiter 链路 |
 | 《无名之渊》The Nameless Abyss | `compositions/nameless_abyss/` | 小调叙事结构:下行坠落动机 → 上行转调 → 全奏高潮 → 归于寂静(动态跨度 13 dB,经 RMS 分段验证) |
 | 《深渊回响》Echoes of the Abyss | `compositions/echoes_of_the_abyss/` | 大调空灵风格,竖琴琶音 + 钟琴微光 + 合唱吟唱 |
 
