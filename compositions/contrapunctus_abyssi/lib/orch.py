@@ -125,6 +125,13 @@ class Score:
     def tempo(self, bpm, beat):
         self.meta_msgs.append((beat, MetaMessage('set_tempo', tempo=mido.bpm2tempo(bpm))))
 
+    def tempo_ramp(self, bpm0, bpm1, beat0, beat1, steps=6):
+        """速度渐变:beat0→beat1 线性插值(steps 段),避免硬切。"""
+        for i in range(steps + 1):
+            f = i / steps
+            bpm = bpm0 + (bpm1 - bpm0) * f
+            self.tempo(bpm, beat0 + (beat1 - beat0) * f)
+
     def meter(self, num, den, beat):
         self.meta_msgs.append((beat, MetaMessage('time_signature', numerator=num, denominator=den)))
 
