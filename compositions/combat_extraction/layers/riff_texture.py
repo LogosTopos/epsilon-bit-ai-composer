@@ -135,11 +135,16 @@ def build(s, bar0, cycle, ch):
     for rel in (7, 11):
         s.note('brass_stab', 64, 96, beat(rel, 3.0), 0.3)
 
-    # ---------------- 呼吸(rel 12-13):choir Em 长音 ----------------
+    # ---------------- 持续段(rel 12-13):轻层保持(吉他刺点/合唱/钢琴),无空闲 ----------------
     for role in ROLES:
-        cc(role, 66, 12)
+        cc(role, 74, 12)
     for rel in (12, 13):
-        s.chord('choir', CHOIR_VOICE['Em'], 50, beat(rel, 0.0), 3.9)
+        s.chord('choir', CHOIR_VOICE['Em'], 46, beat(rel, 0.0), 3.9)
+        s.note('guitar_dist', HOOK['Em'][0], 60, beat(rel, 0.0), 0.3)
+        s.note('guitar_dist', HOOK['Em'][2], 60, beat(rel, 2.0), 0.3)
+        r0 = PIANO_ROOT['Em']
+        s.note('piano_bang', r0, 56, beat(rel, 0.0), 0.3)
+        s.note('piano_bang', r0 + 12, 56, beat(rel, 0.0), 0.3)
 
     return bar0 + 16
 

@@ -89,18 +89,22 @@ def build(s, bar0, cycle, ch):
             vel = 98 if j in (0, 8) else 92
             s.note('drums', 38, vel, B(11, 2.0 + j * 0.125), 0.09)
 
-    # ---------- 呼吸 (i=12..15): 鼓抽离,回落不归零 ----------
-    # 渐变:第一小节(m15)kick 每拍 1 发 + hat 8分;第二小节(m16)kick 每 2 拍 1 发 + hat 4分
-    s.cc('drums', 11, 66, B(12, 0.0))
-    for b in (0.0, 1.0, 2.0, 3.0):
-        s.note('drums', 36, 78 + dk, B(12, b), 0.2)
-    for b in (0.0, 2.0):
-        s.note('drums', 36, 74 + dk, B(13, b), 0.2)
-    for j in range(8):
-        s.note('drums', 42, 72, B(12, j * 0.5), 0.15)
-    for j in range(4):
-        s.note('drums', 42, 66, B(13, j * 1.0), 0.15)
-    # 呼吸段无 snare / 无 crash(§3 cymbal 抽离;§7 m18 第 4 拍无重音)
+    # ---------- 持续段 (i=12..15): 鼓全程在场(用户要求:不搞空闲段) ----------
+    # kick 8 分驱动 + 3+3+2 重音 + snare 2/4 + hat 16 分,仅略轻于档3;
+    # 末小节(m18)第 4 拍省略 kick 重音(循环工程:回环衔接柔和)
+    s.cc('drums', 11, 76, B(12, 0.0))
+    for i in range(12, 16):
+        for j in range(8):
+            b = j * 0.5
+            if i == 15 and b == 3.0:
+                continue                          # m18 第 4 拍无重音
+            vel = 88 + dk if b in (0.0, 1.5, 3.0) else 80 + dk
+            s.note('drums', 36, vel, B(i, b), 0.2)
+        for b in (1.0, 3.0):
+            s.note('drums', 38, 88 + dk, B(i, b), 0.2)
+        for j in range(16):
+            s.note('drums', 42, 66, B(i, j * 0.25), 0.15)
+    s.note('drums', 49, 88, B(12, 0.0), 1.0)      # 持续段起点 crash
 
     return bar0 + 16
 

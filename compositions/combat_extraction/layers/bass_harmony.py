@@ -125,13 +125,16 @@ def build(s, bar0, cycle, ch):
         fig_vel = 50 if bar == bar0 + 8 else 66   # 首小节渐入
         for k in range(16):
             s.note(V1, FIG[k & 3], fig_vel, bt(bar) + k * 0.25, 0.24)
-    # 呼吸:贝斯留白长音(m15 拍2 起 E1 长音 + bend 收尾;m16 拍3 起 E2 长音),弦乐保持
+    # 持续段(用户要求:Bass 大多数时间存在,不搞空闲段):
+    # 16 分密集驱动保持(轻于档3),末小节第 4 拍降力(回环衔接)
     strchord(bar0 + 12, 'Em', STR_VEL[2], 4.0)
     strchord(bar0 + 13, 'Em', STR_VEL[2], 4.0)
-    s.note(B, 28, 70, bt(bar0 + 12) + 1.0, 3.0)
-    s.bend(B, 2, bt(bar0 + 12) + 1.0, 3.0, 0.6)      # 长滑音:贝斯手收尾的余韵
-    s.note(B, 40, 78, bt(bar0 + 13) + 2.5, 1.5)
-    s.bend(B, 1, bt(bar0 + 13) + 2.5, 1.5, 0.35)
+    for i in range(2):
+        for k in range(16):
+            v = 90 if k % 4 == 0 else 82
+            if i == 1 and k >= 12:
+                v -= 10                        # m16 末 4 个 16 分让位回环
+            s.note(B, BASS_DENSE['Em'][k], v, bt(bar0 + 12 + i) + k * 0.25, 0.24)
     return bar0 + 16
 
 
