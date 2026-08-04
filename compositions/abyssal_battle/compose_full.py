@@ -182,8 +182,18 @@ BASS = {'Am': 45, 'F': 41, 'C': 48, 'G': 43, 'Dm': 50, 'E7': 40}
 BASS_5 = {'Am': 52, 'F': 48, 'C': 55, 'G': 50, 'Dm': 57, 'E7': 47}
 CHORD_TONES = {'Am': [57, 60, 64], 'F': [53, 57, 60], 'C': [60, 64, 67],
                'G': [55, 59, 62], 'Dm': [50, 53, 57], 'E7': [56, 59, 62]}
-CHORD_TONES_LO = {'Am': [45, 52, 57], 'F': [41, 48, 53], 'C': [48, 55, 60],
-                  'G': [43, 50, 55], 'Dm': [50, 57, 62], 'E7': [40, 47, 52]}
+# 分层音高表:每层避开同度堆叠(低频浑浊修复)
+#   低音 riff:根音 45 区(八分脉冲)
+#   吉他:根+五+八开放(57-69 区,离开低音区)
+#   弦乐击奏:根三五(57-64 区,提供三音)
+#   合唱:5-1-3 转位中高音区(57-76 区)
+#   铜管重音:根+五两音(50-67 区,避免与弦乐三音同度)
+GUITAR = {'Am': [57, 64, 69], 'F': [53, 60, 65], 'C': [60, 67, 72],
+          'G': [55, 62, 67], 'Dm': [50, 57, 62], 'E7': [52, 59, 64]}
+CHOIR = {'Am': [64, 69, 72], 'F': [60, 65, 69], 'C': [67, 72, 76],
+         'G': [62, 67, 71], 'Dm': [57, 62, 65], 'E7': [59, 64, 68]}
+BRASS = {'Am': [57, 64], 'F': [53, 60], 'C': [60, 67],
+         'G': [55, 62], 'Dm': [50, 57], 'E7': [56, 62]}
 CHORD_PC = {'Am': {9, 0, 4}, 'F': {5, 9, 0}, 'C': {0, 4, 7}, 'G': {7, 11, 2},
             'Dm': {2, 5, 9}, 'E7': {4, 8, 11, 2}}   # 音级集合(A=9 C=0 E=4 …)
 
@@ -222,7 +232,7 @@ def pizz_stab(sb, ch, vel=58):
 
 def guitar_power(sb, ch, vel=78, dur=0.3):
     for i in range(8):
-        p = CHORD_TONES_LO[ch]
+        p = GUITAR[ch]
         v = vel if i in (0, 4) else vel - 12
         multi(7, [(x, v) for x in p], sb + i * 0.5, dur)
 
@@ -384,9 +394,9 @@ def phOut():
 for bn, bpm in TEMPO:
     ev('meta', MetaMessage('set_tempo', tempo=mido.bpm2tempo(bpm * args.speed)), bar(bn))
 
-# 引子(1-8,96):drone + 滚奏 + 预示碎片
+# 引子(1-8,96):drone + 滚奏 + 预示碎片(pad 去根音,避免双层同度)
 multi(6, [(45, 60)], bar(1), 8 * 4)
-multi(5, [(45, 42), (52, 42), (57, 42)], bar(1), 8 * 4)
+multi(5, [(52, 40), (57, 40), (64, 40)], bar(1), 8 * 4)
 for i in range(8):
     note(1, 38, 62, bar(1) + i * 4, 0.15)
 snare_roll(bar(5), 16, 34, 100)
@@ -451,7 +461,7 @@ for n in range(57, 65):
     bass_whole(bar(n), CHORDS[n], 55)
     pizz_stab(bar(n), CHORDS[n], 58)
     if n >= 61:                                      # 合唱延迟进入(先让拨弦独奏)
-        multi(4, [(x, 50) for x in CHORD_TONES_LO[CHORDS[n]]], bar(n), 4.0)
+        multi(4, [(x, 50) for x in CHOIR[CHORDS[n]]], bar(n), 4.0)
 for seq, v in ((phI1(), 78), (phI2(), 76)):
     for t, p, d in seq:
         note(0, p, v, t, d)
@@ -459,7 +469,7 @@ for n in range(65, 71):
     pattern_light(bar(n))
     bass_riff(bar(n), CHORDS[n], 74)
     pizz_stab(bar(n), CHORDS[n], 62)
-    multi(4, [(x, 58) for x in CHORD_TONES_LO[CHORDS[n]]], bar(n), 4.0)
+    multi(4, [(x, 58) for x in CHOIR[CHORDS[n]]], bar(n), 4.0)
 for t, p, d in phI3():
     note(0, p, 82, t, d)
 # 留白(71-72)+ 滚奏衔接高潮:和声预挂 + crash 落在 73 强拍
@@ -477,8 +487,8 @@ for n in range(73, 97):
     if n >= 74:                                          # 吉他分层进入
         guitar_power(bar(n), CHORDS[n], 72 if n in (74, 75) else 80)
     if n >= 75:                                          # 合唱分层进入
-        multi(4, [(x, 60 if n in (75, 76) else 72) for x in CHORD_TONES_LO[CHORDS[n]]], bar(n), 4.0)
-    multi(3, [(x, 70 if n == 73 else 84) for x in CHORD_TONES[CHORDS[n]]], bar(n), 1.0)
+        multi(4, [(x, 60 if n in (75, 76) else 72) for x in CHOIR[CHORDS[n]]], bar(n), 4.0)
+    multi(3, [(x, 70 if n == 73 else 84) for x in BRASS[CHORDS[n]]], bar(n), 1.0)
     note(3, 57, 90, bar(n) + 3, 0.8)
     if n % 4 == 1:
         drum(CRASH, 104, bar(n), 1.0)
@@ -521,9 +531,9 @@ note(6, 45, 52, bar(106), 4.0)
 
 # 余韵(107-116,96→72):战斗后的寂静——drone + 钢琴回声渐弱
 multi(6, [(45, 40)], bar(107), 5 * 4)
-multi(5, [(45, 36), (52, 36), (57, 36)], bar(107), 5 * 4)
+multi(5, [(52, 34), (57, 34), (64, 34)], bar(107), 5 * 4)
 multi(6, [(45, 30)], bar(112), 5 * 4)
-multi(5, [(45, 28), (52, 28), (57, 28)], bar(112), 5 * 4)
+multi(5, [(52, 26), (57, 26), (64, 26)], bar(112), 5 * 4)
 for i, (t, p, d) in enumerate(phOut()):
     note(0, p, max(30, 56 - i * 6), t, d)
 
