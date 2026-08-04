@@ -13,7 +13,7 @@
 **温跃层/Blink 游戏集成已完成三轮迭代(~/Projects/blink-recovered:音乐状态机/时停低通/
 stinger/游戏内教程/死亡界面/K 键触控板适配),仓库已推 GitHub(LogosTopos/epsilon-bit-ai-composer)。**
 用户判定:子 Agent 最大缺陷 = ①滥用 stab ②瞎调音高;红线 = 子节弃 stab + 音高原位。
-下一步:S-BT 子弹时间子节(设计已定稿)+ S4/S5 按红线重做。
+下一步:S-BT 子弹时间子节(设计已定稿,后台 Agent 实现中)+ S4/S5 重做版已产出(v2,待用户试听验收)。
 本会话全量交接见仓库根 docs/HANDOVER.md。
 
 ## 1. 当前成品(文件)
@@ -144,9 +144,10 @@ rm -f stems/stem_* && python3 mix_stems.py --mid in.mid --render-stems
 1. **S-BT 子弹时间子节**(设计已定稿,未实现):规格见 THERMOCLINE_MUSIC_DESIGN.md §3——
    心跳 kick(8 分双发 68/80)+ 时间晶体(hook 高区闪烁,每 2 小节 1-2 音)+ 弦乐长音拉长;
    无 16 分驱动;音乐不变速(168 保持),低通感靠减高频打击乐;time_fold/time_unfold 转场元素
-2. **S4/S5 按红线重做**(规格见 THERMOCLINE_MUSIC_DESIGN.md §3):
-   S4 重做版=心率 kick + bass 应答原位 + hook 原位(vel+4),不加 brass,弃多调性;
-   S5 重做版=176 BPM + 32 分 hat + 母节 bass/hook 原位,riser 用母节 42-72 原版,弃八度叠置
+2. **S4/S5 红线重做 ✅ 已产出 v2,待用户试听验收**:
+   `S4_Crisis_v2.mid/.mp3`(心率 kick 双发 84/64 + bass 原位应答 + hook vel+4,12 层无 brass)、
+   `S5_Extract_v2.mid/.mp3`(176 BPM + 32 分 hat,riser 母节 42-72 原版,无八度叠置);
+   已程序化验证:两版全部音符音高 ⊆ 母节音高集,零音区告警,brass_stab 零代码引用
 3. **横版 main_sideview.gd BATTLE 音乐挂点**(一行 MusicManager.set_section,目前缺失)
 4. **热噪层**(热量>70% 垂直 stems:fx 高频嘶声 + pad 根音 16 分脉冲)
 5. 远期:S-抢救主线场景 / 菜单循环变体 / 横版教程覆盖 / .app 正式打包
