@@ -8,8 +8,12 @@
 
 ## 0. 一句话现状
 
-**母节 v9(stab 完全辅助化)已产出,待用户试听验收;子节 1《低音入场版》已完成。**
-下一步:转场元素库 + S2~S6 子节 + 连播 demo。
+**母节 v9(stab 完全辅助化,用户验收)+ 子节体系(S1-S6 + 转场库 + SDC v1)已全部交付;**
+**温跃层/Blink 游戏集成已完成三轮迭代(~/Projects/blink-recovered:音乐状态机/时停低通/
+stinger/游戏内教程/死亡界面/K 键触控板适配),仓库已推 GitHub(LogosTopos/epsilon-bit-ai-composer)。**
+用户判定:子 Agent 最大缺陷 = ①滥用 stab ②瞎调音高;红线 = 子节弃 stab + 音高原位。
+下一步:S-BT 子弹时间子节(设计已定稿)+ S4/S5 按红线重做。
+本会话全量交接见仓库根 docs/HANDOVER.md。
 
 ## 1. 当前成品(文件)
 

@@ -1,148 +1,102 @@
-# 交接文档 — ε-bit-ai-composer
+# 交接文档 — ε-bit-ai-composer(2026-08 会话全量交接)
 
-> 用途:让新会话(或协作者)快速掌握项目现状、技术细节、已知缺陷与下一步。
-> 所有结论均来自实际执行与实测,标注了出处;新会话开工前请先读本文件,
-> 再读 `docs/TECH_STACK.md` 与 `docs/REVISION_HISTORY.md`。
+> **给新 Agent 的开工指引**:先读本文档,再读 `compositions/combat_extraction/docs/STATUS.md`(音乐侧权威)、`docs/BLINK_ARCHITECTURE.md`(游戏侧权威)、`README.md`(对外口径)。所有结论均来自实际执行与实测。
 
 ---
 
-## 1. 项目目标
+## 1. 项目现状一句话
 
-**核心流水线(全本地、可复现、确定性)**:
-`LLM 设计音乐结构 → 确定性 Python 生成 MIDI(格式1, 480TPB)→ FluidSynth + MuseScore_General.sf2 渲染 → ffmpeg 峰值管理压码 → 分段 RMS 验证`
+两条主线全部贯通:
+1. **音乐创作流水线**:LLM 设计 → Python/mido 确定性 MIDI → FluidSynth 双音色库渲染 → stems 混音 → TP 限幅压码 → 五维审计,一键全量 24 秒(`build_all.sh`)
+2. **游戏配乐集成**:母节/子节动态音乐体系已实际接入 Godot 游戏《Blink》(温跃层原型),含游戏内教程、死亡结算界面、触控板适配;仓库已推送到 GitHub(public)
 
-**当前活跃项目:《搜打撤》战斗曲**(`compositions/combat_extraction/`,详见该目录 `docs/STATUS.md`):
-母节 v8.2(高潮段满配,用户验收通过)+ 子节 1 低音入场版已完成;子节 2~6 与转场库是下一步。
+## 2. 本会话历程(按阶段,含提交号)
 
-**其余成品(已完成归档)**:
-| 作品 | 目录 | 说明 |
+### 阶段一:母节 v9(stab 完全辅助化)
+- 用户判定 v8 及格但 stab 层有缺陷 → 分析 4 缺陷(力度超标/密度过剩/音区挤占/功能冗余)→ v9 落地(`7dadc60`):brass 1/2/2/0 + vel 62-76、rhythm 只轮 2/4 反拍、riser 42-72、M3 76、混音 0.95/-26dB;**audit 新增第 5 维"stab 辅助度"**(每圈 ≤110 音、hook≤84、其余≤78 含 humanize 口径)
+- 实测:stab 占比 -28dB"旋律可闻" → **-35.9dB 垫底**;用户验收通过
+- v2-v8 实验归档:`archive/combat_extraction/pre_v9_mother/`(`aa35956`,git rename 100%)
+
+### 阶段二:子节体系(平行 3 Agent)
+- 转场 Agent:transitions.py(5 插入式元素 + 衔接矩阵 36 键)+ demo_playthrough.py;我修复 roll32 kick 跨小节重叠(0.3→0.2 拍)
+- 子节 Agent:交付 S2(行进警觉)/S4(绝境压迫)/S5(逃亡冲刺)/S6(尘埃落定),全部人格化(用户教哲学:S1 样板 = 每子节一个音乐人格,素材受控但乐句自由重写)
+- `5af0cd6` 子节体系落地 + `3c1d81e` 子节转音频
+
+### 阶段三:用户裁决与红线(重要,不可违背)
+- **S4/S5 难听**(用户判定,双因):① 滥用 stab ② 瞎调音高(S4 的 +1 半音多调性、S5 的 32 分两八度 riser/hook 八度叠置)
+- **红线永久化**(STATUS 教训 #8):子节创作弃用 stab 元素;音高一律母节素材原位(不移调/不叠置/不扩展音区);子节 = 层开关 + 密度/力度变形 + 人格化乐句重写
+- 高质量范例:S1/S2/S6/母节 v9
+
+### 阶段四:SDC v1 与温跃层转向
+- **SDC v1**(`ab2713b`):搜-打-撤完整版(S1→riser→母节×2→crash_stop→S6,删 m1-2 留白,1:42),`sections/sdc_v1.py`
+- 渲染链路审计(E Agent)→ P0 落地(`3dc2bed`):压码制度化(encode_mp3.py,TP 限幅修复 **-0.5→-1.0 dBTP**)、并行渲染(2.46×,md5 一致)、增量缓存
+- 链路 v2(我手工,`66acbc6`):校验门、按 mid 分目录的增量修复、export_stems.py(24-bit 单圈 loop + zip)、build_all.sh
+- 温跃层音乐设计 v2(`ce07c26`,B Agent 竞品研究校准):时停**音乐不变速**(168 保持,低通 800Hz 抽层,变速只给音效);转场只动 stem 权重;14 层归并 5 档;stinger 系统
+
+### 阶段五:Blink 游戏本体(调查 + 适配 + 集成)
+- D Agent 调查:`Blink.exe + Blink.pck` = **温跃层早期原型**(Godot 4.6.3,180 文件,波次制);机制信号全找到(teleport/时停 tint/heat_cost/ShieldArea);**音频子系统空白**(无总线无音乐,连枪声路径都是坏的)
+- Mac 适配(A Agent):**Godot 4.6.3 直接 `--main-pack` 跑 pck 实测通过**;gdsdecomp 反编译还原工程实测通过(`/tmp/blink_recovered`,21 脚本)
+- 安装 Godot → `/Applications/Godot.app`;桌面「启动Blink.command」
+- 架构研究 + 音乐插入方案:`docs/BLINK_ARCHITECTURE.md`(我逐文件阅读 4804 行)
+- 教程:文档教程(`docs/BLINK_TUTORIAL.md`)+ 游戏内教程(Agent 超时失败后我亲手写 tutorial.gd/.tscn,7 步真实状态判定)
+
+### 阶段六:游戏集成三轮迭代(工作副本 `~/Projects/blink-recovered`)
+- **v1**(`28287c0`):Music/SFX 总线 + MusicManager 三态状态机(PREPARE=S1 循环/BATTLE=母节 5 stems 垂直/CALM=S6)+ 时停低通 + 热量>70% 加成 + 枪声路径修复
+- **v2**(`4dcca6d`,用户试玩反馈):**K 键替代右键瞬移**(触控板适配,player/sideview/tutorial 三处);音乐循环双保险修复(finished 重播);高波变奏(wave≥4);stinger 击杀重音(M3 音头素材,限流 1.5s)
+- **v3**(`d086bc4`):死亡结算界面(波次/得分 + 重新开始/返回/退出按钮);无限波次确认;教程内死亡 R 重开;横版死亡补 CALM
+- 验证:headless 各场景 180-240 帧零 ERROR
+
+### 阶段七:整理与发布
+- README 重写(技术路径图/作品清单/依赖/音源库/快速开始/踩坑沉淀)+ TECH_STACK §A(`ba5126c`)
+- GitHub:`LogosTopos/epsilon-bit-ai-composer`(public,master=ba5126c);早期内容存档分支 `archive/github-legacy`;误建空仓库 `ai-music-composer` 未删(缺 delete_repo scope)
+
+## 3. 当前状态清单
+
+### 音乐侧产物(compositions/combat_extraction/)
+| 产物 | 文件 | 说明 |
 |---|---|---|
-| 《搜打撤》战斗曲 | `compositions/combat_extraction/` | 见上(活跃) |
+| 母节 v9 双版 | Combat_Extraction(.mid/.mp3)+ v9_synth/v9_trumpet | 主成品 = 合成器版 |
+| SDC v1 | Combat_Extraction_SDC_v1.mid/.mp3 | 搜-打-撤完整版 1:42 |
+| 六子节 | S1-S6 各 .mid/.mp3 | S4/S5 待重做 |
+| 连播 demo | Combat_Extraction_Playthrough.mid/.mp3 | 3:01 |
+| 转场库 | sections/transitions.py | 5 元素 + 矩阵 |
+| 渲染链路 v2 | build_all.sh / build.sh / mix_stems.py / encode_mp3.py / export_stems.py / audit_v7.py | 一键全量 24s |
+| 文档 | docs/STATUS.md(权威)/ ARCHITECTURE / THERMOCLINE_MUSIC_DESIGN / GAME_THERMOCLINE / BLINK_ARCHITECTURE / BLINK_MAC_PORT / BLINK_TUTORIAL | |
 
+### 游戏侧工程(~/Projects/blink-recovered,非 git 仓库)
+- 还原工程 + 集成:MusicManager(autoload)、tutorial 场景、死亡界面、K 键、枪声修复
+- 音频资源 assets/music/:prepare_loop.wav(S1)/ calm_once.wav(S6)/ battle_stems/*.wav(母节 5 stems)/ stinger.wav
+- 运行:桌面「启动Blink.command」= `Godot --path ~/Projects/blink-recovered`;原版 = `--main-pack ".../QQ下载/Blink/Blink.pck"`
+- 原版 pck 位置:`/Users/topologyw/Documents/QQ下载/Blink/`
 
-| 作品 | 目录 | 时长 | 实验主题 | 提交 |
-|---|---|---|---|---|
-| 《深渊四章》组曲 | `compositions/abyssal_suite/` | 15:01 | 完整曲目创作:循环动机体系(X = D–C#–A)、赋格/卡农/hocket/双主题对位、多旋律变奏;68 轨全编制管弦乐 | `a98ba1b` |
-| 《深渊对位》 | `compositions/contrapunctus_abyssi/` | 4:36 | 短时间高密度:帕萨卡利亚 11 段变奏(转位和声/减缩/hemiola/弱音小号)+ 赋格(间插段)+ 增时/倒影高潮 + 皮卡迪;**链路层补课**(CC10 声像/CC91 混响发送/CC11 连续斜坡/人性化) | `0cee087` |
+## 4. 环境与工具(实测版本)
 
-**项目主线(用户认可的方向)**:从"写好曲谱"到"MP3 成品"之间的五层——演奏 / 合成 / 混音 / 母带 / 编码。组曲只覆盖了作曲层+渲染层;对位曲补上了混音层(声像、混响发送)与演奏层(动态连续化、人性化)的一部分。**混音/母带层仍未完整**。
+| 项 | 值 |
+|---|---|
+| Python | /opt/anaconda3/bin/python3(3.13)|
+| FluidSynth | 2.5.7(渲染 120-200× 实时)|
+| ffmpeg | 8.1.2 |
+| Godot | 4.6.3 → /Applications/Godot.app |
+| 音色库 | soundfonts/(MuseScore_General 205MB + GUGS 31MB + SGM 247MB,不入库)|
+| 网络 | Clash Verge 代理 127.0.0.1:7897;git/gh 需 -c http.proxy |
+| 缓存纪律 | 运行 Python 前 `rm -rf __pycache__ lib/__pycache__ layers/__pycache__ sections/__pycache__`;stems 增量缓存按 mid 分目录,勿整体 rm(除非 --full)|
 
----
+## 5. 已知问题与待办(优先级排序)
 
-## 2. 技术栈关键细节(实测结论,别走弯路)
+1. **S-BT 子弹时间子节**(设计已定稿,未实现):时间冻结人格,禁 stab,音乐不变速(低通抽层),time_fold/time_unfold 转场元素
+2. **S4/S5 按红线重做**:弃移调/弃叠置/弃 stab 强调(S5 保留 176 BPM + 32 分 hat 即可)
+3. **横版 main_sideview.gd 缺 BATTLE 音乐挂点**(进横版战斗不切 BATTLE,一行:MusicManager.set_section)
+4. **热噪层**(热量专用素材,当前只有 bass/drums +2dB 近似)
+5. **.app 正式打包**(当前 `Godot --path` 直跑;方案 B 流程见 BLINK_MAC_PORT.md)
+6. S-抢救(主线剧情场景,远期)/ 菜单循环变体
+7. ai-music-composer 空仓库删除(需 delete_repo scope,GH_TOKEN 环境变量阻碍 refresh)
+8. 横版教程覆盖(tutorial 目前只用俯视 main.tscn)
 
-### 2.1 音色库(核心资产,已被充分挖掘)
-`soundfonts/MuseScore_General.sf2`(205MB,310 预置,17 个 bank):
+## 6. 给新 Agent 的纪律清单
 
-- **Expr 动态变体 = bank 17/18/21/26/31/41/51**:CC11 控制响度(**实测 CC11=0 静音,120≈ff**)。所有持续声部(弦乐慢弓/震音、木管、铜管、合唱)用 Expr,动态由 CC11 曲线驱动。
-- **弦乐分部 = bank 20-51**:Violins(20/21)、Violins2(25/26)、Violas(30/31)、Celli(40/41)、Basses(50/51),各有 slow(48/49)/fast/trem(44)/pizz(45);pizz 与 trem 无 Expr 版的部分用非 Expr bank(力度驱动)。
-- **其他可用色彩**:bank 8/14 教堂钟、0/8 钢片琴、0/9 钟琴、0/19 管风琴、17/59 弱音小号、17/58 大号、17/70 大管、0/46 竖琴。
-- **鼓组实测**:Orchestra Kit(bank 128 prog 48)的 **35-49 号**响亮(底鼓36/军鼓38/通鼓41-45/镲49);标准套件(128/0)的 51+ 号(镲/三角铁)偏弱,**不要依赖三角铁(81)**。
-- **通道 9(0-based)= GM 打击乐通道**,只能放鼓;其他任何乐器放上去都会变成鼓音。通道 10(0-based)是普通旋律通道。
-
-### 2.2 通道规划(两作品一致)
-```
-0 钢琴/教堂钟   1 竖琴      2 一提      3 二提      4 中提
-5 大提          6 低音提琴   7 长笛/短笛  8 双簧管/英国管  9 打击乐(GM)
-10 单簧管/大管  11 定音鼓   12 圆号/铜管组  13 小号/长号/大号(共享,无声区切 program)
-14 合唱        15 钢片琴/管风琴/钟琴
-```
-
-### 2.3 库(两版并存,注意区分)
-- `compositions/abyssal_suite/lib/orch.py` = **v1**:通道级程序状态、bank select、CC11 分档、自检(切换冲突/同音重叠/音区)。
-- `compositions/contrapunctus_abyssi/lib/orch.py` = **v2**:v1 + **CC10 声像**(随音色切换发出)、**CC91 混响发送**、**CC11 节点间整拍线性插值**(渐强无阶梯)、**人性化**(seed=42,±0.006 拍 / ±2 力度,可复现)、自检升级(按 note_off 配对算真实重叠,容忍 <25ms 抖动邻接)。
-- `lib/themes.py`(组曲):移调/倒影/逆行/增时/减缩/切片等旋律变换工具。
-
-### 2.4 渲染与压码(统一口径)
-```bash
-fluidsynth -F out.wav -r 44100 -R 0.9 -C 0 -g 1.2 soundfonts/MuseScore_General.sf2 in.mid
-# 压码:volumedetect → volume 补偿到 -1.2 dB → alimiter=limit=0.95 → libmp3lame -q:a 2
-```
-
-### 2.5 验证
-- `scripts/verify_render.py --mid ... --audio ... --segments "0-30:段A,..."`
-- ⚠️ **口径坑:该工具的 dB 比本文档低 6dB**(RMS 除以 65535 而非 32767)。本文档/作品说明里的数字以"自己写的 python wave+audioop(除以 32768)"为准。
-- 生成时自检(每曲生成时打印):音区越界/切换冲突/同音重叠,应为 0。
-
-### 2.6 作曲规则沉淀(见 docs/TECH_STACK.md 2.6)
-转场五件套(节奏先现/密度渐进/音色提前切换/和声预挂/速度中间值)、声部分层(110Hz 附近单声部、和弦三音职责唯一、音区分配表)、平行对位归位(±2 半音)。
-
----
-
-## 3. 技术缺陷(诚实清单,按严重度)
-
-### 3.1 最严重:没有耳朵
-所有混音/平衡判断靠分段 RMS 与峰值代理,无法听辨"糊/薄/刺/平"。**试听迭代必须依赖用户**。工作流上应把"给用户试听 → 收集具体段落反馈 → 定向修"作为默认循环(仓库 REVISION_HISTORY 的六轮打磨就是证明)。
-
-### 3.2 混音层不完整
-1. **无 stem 分轨混音**:全部乐器渲染进同一个 WAV,无法对弦乐组/铜管组/打击乐分别 EQ、压缩、加混响。
-2. **无 EQ**:音色库直出,频段冲突(低频浑浊、中频堆叠)靠声部分层规则缓解,但无后期手段。
-3. **无压缩**(除 MP3 端 limiter):动态范围巨大(-43~-23dB)是音乐性的,但个别段落仍可能"忽大忽小"。
-4. **无卷积混响**:FluidSynth `-R 0.9` 是算法混响一刀切,所有乐器同一空间感;真实混音应对弦乐/合唱/竖琴用不同发送量与 IR。
-5. **无 LUFS 响度标准化**:各乐章响度差 ~6dB 是设计使然,但若做流媒体发布需要 loudnorm。
-
-### 3.3 演奏层仍机械
-1. 人性化仅为 ±0.006 拍/±2 力度的小抖动;**无乐句级 rubato**、无渐快/渐慢曲线。
-2. **CC64 延音踏板从未使用**(钢琴段落没有)。
-3. 无 staccato/legato/marcato 弓法级分化(音色库能力有限,但 pizz/慢弓切换之外仍有空间,如利用不同 velocity 层的 attack 差异)。
-
-### 3.4 作曲层已知短板
-1. **转位和声只在对位曲帕萨卡利亚里用了**(固定低音迫使);组曲及多数段落仍是原位根音,低音线条"块状"。→ 全面引入 6/3、6/4 转位表。
-2. 赋格间插段短(对位曲只有 Bb→Gm→Eb→A7 一步序列);可做多小节模进链、远关系调(bIII/bVI/中音关系)。
-3. 混色叠置(长笛+中提琴、巴松+低音)用量少;主题传递链(对位曲 8 次)可继续扩展。
-4. 已注册未充分利用的音色:弱音小号(59,仅对位曲 St8)、大号(58,仅尾声)、钟琴(仅高潮)、钢琴(两曲几乎没用)。
-
-### 3.5 工程缺陷
-1. **两套库并存**(组曲 v1 / 对位曲 v2),未统一;组曲没有声像/连续动态/人性化。
-2. 组曲的"三角铁/铃鼓"从未真正响过(最初通道错位时是钢琴音;修正后音色库三角铁本身弱);对位曲用 Orchestra Kit 规避了。
-3. `verify_render.py` 的 6dB 口径坑(见 2.5)。
-4. MIDI 无元数据;仅对位曲 MP3 有 ID3 标签。
-5. 网络:外网需代理 `127.0.0.1:7897`(curl 加 `-x`,git 加 `-c http.proxy=`),GitHub 操作默认用 `gh`。
-
----
-
-## 4. 改进方向(按性价比排序)
-
-### 4.1 stem 分轨混音(最高价值,补 3.2 的三层)
-按通道组把 MIDI 拆成多份(弦乐/木管/铜管/打击乐/色彩),各自渲染成 WAV,再用 ffmpeg 混音:
-- 每 stem 可独立:EQ(`highpass/lowpass/equalizer`)、压缩(`acompressor`)、声像、卷积混响(`afir` + 免费音乐厅 IR,如 OpenAIRlib)。
-- 实施提示:写一个 `render_stems.py`,读 MIDI 按 channel 过滤事件生成 N 个临时 MIDI;或给 orch.py 加按轨分组的渲染接口。IR 下载走代理。
-
-### 4.2 统一库版本
-把 v2 能力(CC10/CC91/CC11 插值/人性化)回移植到组曲 → 组曲重新渲染 → 与旧版对比 RMS/峰值。新作品一律用 v2。
-
-### 4.3 响度与编码
-- ffmpeg `loudnorm`(或按 -14 LUFS 校准)应用到成品;补齐 ID3 标签(曲名/作者/专辑)。
-
-### 4.4 作曲层
-1. 为组曲写**转位表**(每和弦提供原位/6/3/6/4 三档,低音线条化)。
-2. 更长的间插段:对题材料多小节模进链 + 远关系转调。
-3. CC64 踏板(钢琴)、乐句级 rubato(CC11 曲线用样条插值而非线性)。
-4. 给弱音小号/大号/钟琴/钢琴安排正式段落(不是点缀)。
-
-### 4.5 试听迭代纪律
-每个成品的第一优先级动作:**给用户听,收集"哪段不对"**。用户反馈优先于任何指标。
-
----
-
-## 5. 复现与已知坑速查
-
-```bash
-cd compositions/contrapunctus_abyssi && python3 compose.py          # 生成 MIDI + 自检
-fluidsynth -F x.wav -r 44100 -R 0.9 -C 0 -g 1.2 ../../soundfonts/MuseScore_General.sf2 Contrapunctus_Abyssi.mid
-ffmpeg -y -i x.wav -af "volume=<补偿>dB,alimiter=limit=0.95" -codec:a libmp3lame -q:a 2 x.mp3
-```
-- 通道 9 只能放打击乐;Expr 音色 CC11=0 静音(动态下限不要设 0,用 20+);
-- 程序切换必须落在该通道无声区(orch.py 自检会抓);
-- 人性化抖动 + 相邻同音会生成 <25ms 假重叠(自检已容忍);
-- macOS `stat -f%z` 与 GNU 冲突,脚本用 `os.path.getsize`;
-- 大文件(组曲 WAV 159MB)不入库(gitignore),MP3/MIDI/脚本/文档入库。
-
----
-
-## 6. 新会话开工建议
-
-1. 先问用户听感反馈(组曲/对位曲哪段"不对"),把反馈列成待修清单。
-2. 若用户无反馈,默认任务:**4.1 stem 分轨混音**(在对位曲上落地,产出与单 WAV 渲染的对比)。
-3. 或:**4.2 统一库 + 组曲重渲染**。
-4. 任何改动保持"生成时自检 0 冲突 + 分段 RMS 曲线 + 峰值 -1.2dB"的验收标准,并更新对应作品的《作品说明.md》。
+- 子节创作:禁 stab、音高原位、人格化(见 STATUS 教训 #8)——**用户裁决,不可回退**
+- 缓存纪律、双库渲染顺序不可反(§4)
+- 子 Agent 分工时:文件所有权隔离、交接走文件、完成后父会话验证(trust but verify)
+- 渲染/压码一律走 build_all.sh / encode_mp3.py,不要手工 ffmpeg 裸压(TP 口径)
+- 改游戏工程前先读 ~/Projects/blink-recovered 对应脚本 + docs/BLINK_ARCHITECTURE.md;headless 验证:`Godot --headless --path ~/Projects/blink-recovered res://scenes/... --quit-after 180`
+- 提交:音乐侧改动提交到本仓库;游戏工程非 git,改动记录更新到 BLINK_ARCHITECTURE.md 实施状态节
