@@ -9,7 +9,8 @@ Thermocline, Chinese name `温跃层`, is a fast teleport-shooter game concept. 
 - Bass and drums as the main movement engine.
 - Harmony and arps as pressure, not decoration.
 - FX for teleport, lock-on, and stasis cues.
-- Avoid a loud foreground melody unless it is clearly better than the backing.
+- Default to no foreground melody. A lead must beat the no-lead backing in an
+  explicit A/B comparison before it is admitted.
 
 ## Process Summary
 
@@ -64,6 +65,8 @@ examples/thermocline_chatb_direct_v1/
 ```
 
 This pass delayed and lowered the lead while raising bass, drums, harmony, and arps. It clarified the direction, but the best path still became no-lead.
+Do not use this folder as the musical quality target; it is failure-boundary
+evidence.
 
 ### No-Lead Expanded
 

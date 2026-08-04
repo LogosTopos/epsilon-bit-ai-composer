@@ -22,6 +22,9 @@ Only four example/reference folders are intentionally kept:
 - `examples/thermocline_v1_reconsidered/`
 
 They are kept because they explain the successful direction and the failure boundary around lead writing.
+`examples/thermocline_chatb_direct_v1/` should not be used as the musical
+quality target; it is process evidence. The stronger reference direction is the
+stricter no-lead path derived from `examples/thermocline_v1_reconsidered/`.
 
 ## Stable Components
 
@@ -50,6 +53,8 @@ They are kept because they explain the successful direction and the failure boun
 
 - The AI-produced melody-only branch was a failure.
 - The v1 backing track was more valuable than its lead.
+- The strict no-lead revision was better than versions with a delayed or quiet
+  lead.
 - Lower-frequency drive, drums, chord stabs, arps, and quiet cue layers can produce a viable game loop.
 - Loud lead and loud prompt-like arps damage the mix quickly.
 - The local renderer output is authoritative; MIDI playback is only a secondary reference.

@@ -1,0 +1,10 @@
+{
+  "type": "instrument",
+  "id": "noise_brush_soft",
+  "instrument": "noise_long",
+  "role": "drum",
+  "description": "Soft brushed-noise percussion for low-speed ambient grooves.",
+  "pan": 0.16,
+  "volume": 0.18,
+  "midi_channel": 9
+}

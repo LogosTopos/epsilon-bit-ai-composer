@@ -1,0 +1,14 @@
+{
+  "type": "instrument",
+  "id": "pad_rain_glass",
+  "instrument": "sine",
+  "role": "pad",
+  "description": "Soft glassy sustained pad for calm, bright, non-combat scenes.",
+  "pan": 0.0,
+  "volume": 0.36,
+  "midi_program": 89,
+  "default_fx": {
+    "vib": [1.2, 5.0],
+    "tremolo": [0.8, 0.04]
+  }
+}

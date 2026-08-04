@@ -1,0 +1,13 @@
+{
+  "type": "instrument",
+  "id": "arp_dew_sparkle",
+  "instrument": "sine",
+  "role": "soft_arp",
+  "description": "Quiet dew-like high arpeggio for reflective motion without lead behavior.",
+  "pan": 0.24,
+  "volume": 0.24,
+  "midi_program": 11,
+  "default_fx": {
+    "vib": [5.5, 2.0]
+  }
+}

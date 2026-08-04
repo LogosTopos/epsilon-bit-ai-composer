@@ -40,3 +40,15 @@ assets/fluidsynth/
 *.zip
 *.bat
 *.tmp
+
+# Local upstream research clones
+research/external_sources/
+
+# SoundFonts (large binary, download separately)
+soundfonts/
+
+# Legacy archive: 大目录与旧实验产物不入库
+archive/legacy-8bit/examples/
+archive/legacy-8bit/output/
+archive/legacy-8bit/research/external_sources/
+archive/fm-renders/

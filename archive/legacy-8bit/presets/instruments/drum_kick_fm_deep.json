@@ -1,0 +1,10 @@
+{
+  "type": "instrument",
+  "id": "drum_kick_fm_deep",
+  "instrument": "fm",
+  "role": "drum",
+  "description": "Deep FM kick drum with strong sub presence. Use fm_index=8.0, fm_ratio=2.5 for maximum weight.",
+  "pan": 0.0,
+  "volume": 0.88,
+  "midi_channel": 9
+}

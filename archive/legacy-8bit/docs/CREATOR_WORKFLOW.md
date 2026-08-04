@@ -125,6 +125,28 @@ Run the bundled proof:
 python scripts/render_preset_demo.py
 ```
 
+## External Adapter Use
+
+Instrument and macro cards should stay as JSON even when an external backend is
+used. Adapters consume the same composition dictionaries as the renderer:
+
+```python
+from ebit.adapters.amy_adapter import build_amy_event_plan
+from ebit.adapters.music21_adapter import analyze_composition
+
+analysis = analyze_composition(composition)
+amy_plan = build_amy_event_plan(composition)
+```
+
+Use this pattern for project-specific instrument specialization:
+
+1. copy or extend the nearest useful instrument card;
+2. keep the same role and macro compatibility unless there is a clear reason to
+   change it;
+3. add backend-specific fields only as extra data;
+4. keep the normal renderer fields valid, so the local epsilon-bit demo still
+   works.
+
 ## Design Rules
 
 - Put reusable sound identity in instrument cards.

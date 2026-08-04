@@ -1,0 +1,8 @@
+{
+  "type": "macro",
+  "id": "bass_octave_drop",
+  "description": "One-octave downward slide for bass fills and section transitions.",
+  "fx": {
+    "slide_to": "C1"
+  }
+}

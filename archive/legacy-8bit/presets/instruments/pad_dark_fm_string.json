@@ -1,0 +1,14 @@
+{
+  "type": "instrument",
+  "id": "pad_dark_fm_string",
+  "instrument": "fm_string",
+  "role": "pad",
+  "description": "Dark, slightly metallic string-like pad from FM synthesis. Good for cold ambient and tension beds.",
+  "pan": 0.0,
+  "volume": 0.35,
+  "midi_program": 49,
+  "default_fx": {
+    "vib": [3.0, 6.0],
+    "tremolo": [1.8, 0.07]
+  }
+}

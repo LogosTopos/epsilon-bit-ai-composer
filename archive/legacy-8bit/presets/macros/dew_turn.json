@@ -1,0 +1,8 @@
+{
+  "type": "macro",
+  "id": "dew_turn",
+  "description": "Tiny upper-neighbor turn for reflective high-register droplets.",
+  "fx": {
+    "arp": [0, 2, 0, -2]
+  }
+}

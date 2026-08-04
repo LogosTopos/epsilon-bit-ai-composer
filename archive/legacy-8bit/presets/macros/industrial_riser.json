@@ -1,0 +1,9 @@
+{
+  "type": "macro",
+  "id": "industrial_riser",
+  "description": "Upward pitch sweep with tremolo for industrial tension builds. Combine with retrigger for alarm effect.",
+  "fx": {
+    "slide_to": "D7",
+    "tremolo": [8.0, 0.12]
+  }
+}

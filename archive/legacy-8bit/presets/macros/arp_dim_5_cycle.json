@@ -1,0 +1,8 @@
+{
+  "type": "macro",
+  "id": "arp_dim_5_cycle",
+  "description": "Diminished 5-note arpeggio cycle creating irregular rhythmic tension against 4/4.",
+  "fx": {
+    "arp": [0, 3, 6, 9, 12]
+  }
+}

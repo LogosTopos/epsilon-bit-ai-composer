@@ -1,0 +1,13 @@
+{
+  "type": "instrument",
+  "id": "pulse_marimba_soft",
+  "instrument": "pulse_25",
+  "role": "harmony_pulse",
+  "description": "Short, warm pulse tone for wooden marimba-like chord fragments.",
+  "pan": -0.08,
+  "volume": 0.34,
+  "midi_program": 12,
+  "default_fx": {
+    "vib": [3.0, 1.5]
+  }
+}

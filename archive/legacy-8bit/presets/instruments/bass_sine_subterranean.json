@@ -1,0 +1,10 @@
+{
+  "type": "instrument",
+  "id": "bass_sine_subterranean",
+  "instrument": "sine",
+  "role": "bass_sub",
+  "description": "Ultra-low sine sub-bass floor. Sits below the main bass drive for physical weight. Keep sparse and long.",
+  "pan": 0.0,
+  "volume": 0.58,
+  "midi_program": 38
+}

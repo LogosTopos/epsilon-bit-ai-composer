@@ -1,0 +1,9 @@
+{
+  "type": "macro",
+  "id": "soft_swell",
+  "description": "Slow shimmer for sustained non-lead pad notes.",
+  "fx": {
+    "vib": [1.0, 6.0],
+    "tremolo": [0.7, 0.05]
+  }
+}

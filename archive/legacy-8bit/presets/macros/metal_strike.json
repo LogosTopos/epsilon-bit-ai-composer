@@ -1,0 +1,9 @@
+{
+  "type": "macro",
+  "id": "metal_strike",
+  "description": "Quick metallic attack with fast vibrato decay for industrial percussion hits.",
+  "fx": {
+    "vib": [14.0, 6.0],
+    "retrigger": 2
+  }
+}

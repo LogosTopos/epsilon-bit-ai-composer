@@ -1,0 +1,9 @@
+{
+  "type": "macro",
+  "id": "bell_toll_3",
+  "description": "Threefold bell toll with retrigger for processional markers.",
+  "fx": {
+    "retrigger": 3,
+    "vib": [5.0, 4.0]
+  }
+}

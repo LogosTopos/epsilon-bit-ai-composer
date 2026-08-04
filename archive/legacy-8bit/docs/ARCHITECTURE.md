@@ -3,15 +3,31 @@
 The repository now has four layers:
 
 ```text
-composition script
-  -> optional preset cards
+upper-layer composition cards
+  -> composition script
+  -> preset cards
   -> explicit note timelines
+  -> optional external adapters for analysis / alternate backends
   -> src/ebit/renderer.py
   -> stereo numpy buffers
   -> WAV/MP3 through soundfile + ffmpeg
   -> optional MIDI through mido
   -> validation JSON and stem CSV
 ```
+
+The most important current boundary is musical, not technical: the system is
+reliable only when it works as a constrained role-first support engine. It
+should not start from a free lead melody. The recommended plan is described in
+[Fixed Pattern Composition Protocol](FIXED_PATTERN_COMPOSITION_PROTOCOL.md).
+
+The intended upper-layer cards are:
+
+- `motif_card`: cross-role event cell, not a melody line;
+- `groove_card`: pulse, accent hierarchy, and motion policy;
+- `section_card`: section function and role activation;
+- `role_budget_card`: density, register, and foreground budgets;
+- `timbre_card`: target sound and asset/backend selection;
+- `backend_card`: renderer or external process boundary.
 
 ## Renderer Input
 
@@ -109,6 +125,32 @@ track = library.make_track("fx_teleport_chirp", [note])
 This keeps the old idea of instrument cards and macros, but with a small schema that is compatible with the current scripts.
 
 See [Creator Workflow](CREATOR_WORKFLOW.md) for the card schema and extension rules.
+
+## External Adapter Layer
+
+Optional adapters live in:
+
+```text
+src/ebit/adapters/
+```
+
+They do not replace the renderer or the JSON card format. Their job is to make
+the normal composition dictionary available to external tools:
+
+- MusPy for symbolic conversion and batch-oriented analysis.
+- music21 for explainable theory summaries.
+- AMY for richer synth event plans.
+- JSON-speaking subprocess tools for final-stage render or mix experiments.
+
+Only dependency-free adapter helpers are exported from `ebit.__init__`.
+Concrete adapters import their optional packages lazily, so existing scripts keep
+working with the normal `requirements.txt`.
+
+See [External Adapters](EXTERNAL_ADAPTERS.md) for usage.
+
+Complex timbres such as choir, organ, or aria-like textures require a real
+asset/backend route: SFZ/SF2, AMY PCM, or an AU/VST-style external process.
+See [Complex Timbre Backends](COMPLEX_TIMBRE_BACKENDS.md).
 
 ## Composition Script Pattern
 
