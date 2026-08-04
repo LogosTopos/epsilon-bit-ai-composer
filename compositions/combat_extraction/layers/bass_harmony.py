@@ -54,8 +54,15 @@ VOICES = {
     'D':  (38, 62, 66, 69),
 }
 
-# 档3 vln1 16 分 E 五声音型(§5)
-FIG = (76, 78, 81, 78)
+# 档3 vln1 16 分音型(和谐修正):随和弦取音,全部为和弦音。
+# 原 (76,78,81,78):81 在 C/G 为外音,78 与 Hook 79 摩擦;统一 76/79 在 D 小节
+# 与二提 F#4 八度半音摩擦(实测 103 次)——按和弦取音彻底消除
+FIG_VAR = {
+    'Em': (76, 79, 76, 79),
+    'C':  (76, 79, 76, 79),
+    'G':  (74, 79, 74, 79),
+    'D':  (74, 78, 74, 78),
+}
 
 # §2 结构表:每档 4 小节(呼吸 2 小节)
 TIERS = (
@@ -121,10 +128,11 @@ def build(s, bar0, cycle, ch):
     for i, prog in enumerate(TIERS[2]):
         riff_dense(bar0 + 8 + i, prog, BASS_VEL[2])
         strchord(bar0 + 8 + i, prog, STR_VEL[1], 4.0)
-    for bar in range(bar0 + 8, bar0 + 12):
-        fig_vel = 50 if bar == bar0 + 8 else 66   # 首小节渐入
+    for i, bar in enumerate(range(bar0 + 8, bar0 + 12)):
+        fig_vel = 50 if i == 0 else 66            # 首小节渐入
+        fig = FIG_VAR[TIERS[2][i]]                # 随和弦取音(全部和弦音)
         for k in range(16):
-            s.note(V1, FIG[k & 3], fig_vel, bt(bar) + k * 0.25, 0.24)
+            s.note(V1, fig[k & 3], fig_vel, bt(bar) + k * 0.25, 0.24)
     # 持续段(用户要求:Bass 大多数时间存在,不搞空闲段):
     # 16 分密集驱动保持(轻于档3),末小节第 4 拍降力(回环衔接)
     strchord(bar0 + 12, 'Em', STR_VEL[2], 4.0)
