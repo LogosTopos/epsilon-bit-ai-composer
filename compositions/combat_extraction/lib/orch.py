@@ -122,6 +122,19 @@ class Score:
             self._cc_all.setdefault(key, []).append((beat, val))
         self._ev(name, beat, Message('control_change', channel=self.channel[name], control=ctrl, value=val))
 
+    def bend(self, name, semis, beat, dur, bend_time=0.25):
+        """滑音:音符尾部 bend_time 秒内线性滑向 +semis 半音(推弦/滑弦),音尾复位。
+        贝斯手的"手"感来源。semis 建议 1-3。"""
+        ch = self.channel[name]
+        start = beat + max(0.0, dur - bend_time)
+        steps = max(3, int(bend_time * 10))
+        target = min(8191, int(4096 * semis))  # 有符号 pitch -8192..8191;4096 = +1 半音
+        for i in range(steps + 1):
+            f = i / steps
+            v = int(round(target * f))
+            self._ev(name, start + bend_time * f, Message('pitchwheel', channel=ch, pitch=v))
+        self._ev(name, beat + dur + 0.03, Message('pitchwheel', channel=ch, pitch=0))
+
     def tempo(self, bpm, beat):
         self.meta_msgs.append((beat, MetaMessage('set_tempo', tempo=mido.bpm2tempo(bpm))))
 

@@ -82,14 +82,14 @@ def build(s, bar0, cycle, ch):
     cc('brass_stab', 72, 4)
     for rel in range(4, 8):
         for i, p in enumerate(M2[(rel - 4) % 2]):
-            s.note('brass_stab', p, 80, beat(rel, i * 0.5), 0.35)
+            s.note('brass_stab', p, 74, beat(rel, i * 0.5), 0.35)   # 让位贝斯
 
     # ---------------- 档3(rel 8-11):全奏 ----------------
     # 先现:档2 末(m10)铜管低力度预击(2.0/2.5/3.5,避开 3.0 M3 齐击)+ 吉他 2 音预击
     for i, p in enumerate(M2[0][:2]):
         s.note('brass_stab', p, 62, beat(7, 2.0 + i * 0.5), 0.35)
     s.note('brass_stab', M2[0][0], 62, beat(7, 3.5), 0.35)
-    s.note('guitar_dist', HOOK['Em'][0], 55, beat(7, 2.5), 0.4)
+    s.note('guitar_dist', HOOK['Em'][0], 48, beat(7, 2.5), 0.4)
     s.note('guitar_dist', HOOK['Em'][1], 55, beat(7, 3.0), 0.4)
     for role in ROLES:
         cc(role, 84, 8)
@@ -97,7 +97,7 @@ def build(s, bar0, cycle, ch):
         cname = CHORDS[(rel - 8) % 4]
 
         # M2 刺刀 vel 90(档3 末小节渐弱)
-        brass_vel = 90 if rel < 11 else 68
+        brass_vel = 82 if rel < 11 else 62
         for i, p in enumerate(M2[(rel - 8) % 2]):
             s.note('brass_stab', p, brass_vel, beat(rel, i * 0.5), 0.35)
 
@@ -111,22 +111,22 @@ def build(s, bar0, cycle, ch):
                 hook[6], hook[7] = 64, 66
             # 力度斜坡:第一小节 70→96 渐入(切入不生硬);末小节 96→70 渐出
             if rel == 8:
-                ramp = (70, 76, 82, 88, 92, 96, 96, 96)
+                ramp = (62, 68, 74, 80, 84, 88, 88, 88)
             elif rel == 11:
-                ramp = (96, 96, 92, 88, 82, 76, 72, 68)
+                ramp = (88, 88, 84, 80, 74, 68, 64, 60)
             else:
-                ramp = (96,) * 8
+                ramp = (88,) * 8
             for i, p in enumerate(hook):
                 s.note('guitar_dist', p, ramp[i], beat(rel, i * 0.5), 0.4)
 
         # 合唱长音 + 合成垫叠置(m11 低力度渐入,m14 渐出)
-        choir_vel = 45 if rel == 8 else (50 if rel == 11 else 58)
+        choir_vel = 40 if rel == 8 else (44 if rel == 11 else 50)   # 让位贝斯
         pad_vel = 30 if rel == 8 else (34 if rel == 11 else 40)
         s.chord('choir', CHOIR_VOICE[cname], choir_vel, beat(rel, 0.0), 3.9)
         s.chord('synth_pad', CHOIR_VOICE[cname], pad_vel, beat(rel, 0.0), 3.9)
 
         # 钢琴低音八度重击(第 1 拍;m11 轻、m14 更轻收束)
-        bang_vel = 62 if rel == 8 else (70 if rel == 11 else 80)
+        bang_vel = 56 if rel == 8 else (62 if rel == 11 else 70)   # 让位贝斯
         r0 = PIANO_ROOT[cname]
         s.note('piano_bang', r0, bang_vel, beat(rel, 0.0), 0.3)
         s.note('piano_bang', r0 + 12, bang_vel, beat(rel, 0.0), 0.3)

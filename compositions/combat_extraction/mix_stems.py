@@ -31,7 +31,7 @@ STEMS = [
 # 混音链
 CHAIN = {
     'drums':      'acompressor=threshold=-18dB:ratio=3:attack=5:release=100,volume=1.0',
-    'bass':       'highpass=f=30,volume=0.95',
+    'bass':       'highpass=f=30,volume=1.35',   # 主角:贝斯手被看见
     'strings':    'highpass=f=60,volume=0.75',
     'stab':       'acompressor=threshold=-22dB:ratio=2:attack=10:release=150,volume=0.9',
     'atmosphere': 'volume=0.7',

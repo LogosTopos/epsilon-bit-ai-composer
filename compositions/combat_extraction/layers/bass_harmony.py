@@ -25,21 +25,25 @@
 import sys, os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-# §4 贝斯 riff 表(8 分 ×8/小节)
-RIFF = {
-    'Em': (28, 28, 40, 28, 28, 40, 28, 35),
-    'C':  (36, 36, 48, 36, 36, 48, 36, 43),
-    'G':  (31, 31, 43, 31, 31, 43, 31, 38),
-    'D':  (38, 38, 50, 38, 38, 50, 38, 45),
+# ============ 主角贝斯(用户要求:能被人看见的贝斯手) ============
+# 设计:16 分驱动 + 高把位跳进(28↔43/47/50)+ 句尾 bend 滑音。
+# 档1/2 用主题(3 拍 16 分 + 第 4 拍 8 分重音,有呼吸);档3 全 16 分密集驱动。
+BASS_THEME = {
+    'Em': [(28, 0.25), (40, 0.25), (28, 0.25), (43, 0.25), (40, 0.25), (28, 0.25), (43, 0.25), (40, 0.25),
+           (47, 0.25), (43, 0.25), (40, 0.25), (43, 0.25), (40, 0.5)],
+    'C':  [(36, 0.25), (48, 0.25), (36, 0.25), (43, 0.25), (48, 0.25), (43, 0.25), (36, 0.25), (48, 0.25),
+           (43, 0.25), (48, 0.25), (40, 0.25), (43, 0.25), (40, 0.5)],
+    'G':  [(31, 0.25), (43, 0.25), (31, 0.25), (38, 0.25), (43, 0.25), (38, 0.25), (31, 0.25), (43, 0.25),
+           (38, 0.25), (43, 0.25), (35, 0.25), (38, 0.25), (35, 0.5)],
+    'D':  [(38, 0.25), (50, 0.25), (38, 0.25), (45, 0.25), (50, 0.25), (45, 0.25), (38, 0.25), (50, 0.25),
+           (45, 0.25), (50, 0.25), (42, 0.25), (45, 0.25), (42, 0.5)],
 }
-
-# 档3 16 分加倍(§4 示例结构):每 8 分拆两发 [X, 根音],
-# X 按 根音→八度→和弦音→八度 交替;后半小节的和弦音换五度(Em: 43→35,即 riff 末音)
-RIFF16 = {
-    'Em': (28, 28, 40, 28, 43, 28, 40, 28, 28, 28, 40, 28, 35, 28, 40, 28),
-    'C':  (36, 36, 48, 36, 40, 36, 48, 36, 36, 36, 48, 36, 43, 36, 48, 36),
-    'G':  (31, 31, 43, 31, 35, 31, 43, 31, 31, 31, 43, 31, 38, 31, 43, 31),
-    'D':  (38, 38, 50, 38, 42, 38, 50, 38, 38, 38, 50, 38, 45, 38, 50, 38),
+# 档3 全 16 分密集版(16 音/小节,高把位在拍 2/3)
+BASS_DENSE = {
+    'Em': (28, 40, 28, 43, 40, 43, 28, 40, 43, 47, 43, 40, 43, 40, 43, 28),
+    'C':  (36, 48, 36, 43, 48, 43, 36, 48, 43, 48, 43, 40, 43, 40, 43, 36),
+    'G':  (31, 43, 31, 38, 43, 38, 31, 43, 38, 43, 38, 35, 38, 35, 38, 31),
+    'D':  (38, 50, 38, 45, 50, 45, 38, 50, 45, 50, 45, 42, 45, 42, 45, 38),
 }
 
 # 弦乐和声堆叠(连接表见模块 docstring)
@@ -60,8 +64,8 @@ TIERS = (
     ('Em', 'C', 'G', 'D'),    # 档3 m11-14
     ('Em', 'Em'),             # 呼吸 m15-16
 )
-BASS_VEL = (76, 84, 96, 72)   # 档1/2/3/呼吸
-STR_VEL = (56, 62, 50)        # 档2/3/呼吸
+BASS_VEL = (88, 96, 104, 72)  # 档1/2/3/呼吸 —— 主角,全场最响
+STR_VEL = (52, 58, 46)        # 档2/3/呼吸 —— 辅助让位
 CC11_TIER = (60, 72, 84, 66)  # 各档起点(§8)
 
 
@@ -73,16 +77,26 @@ def build(s, bar0, cycle, ch):
     def bt(bar):
         return (bar - 1) * 4
 
-    def riff8(bar, prog, vel):
-        pat = list(RIFF[prog])
-        if cycle == 1:   # 微变:每半小节 8 分次序左轮换(和声不变)
-            pat = pat[1:4] + pat[:1] + pat[5:8] + pat[4:5]
-        for i, p in enumerate(pat):
-            s.note(B, p, vel, bt(bar) + i * 0.5, 0.48)
+    def riff_main(bar, prog, vel):
+        """主角主题:16 分驱动 + 句尾 8 分重音 + bend 滑音(贝斯手的"手")"""
+        t = bt(bar)
+        pat = list(BASS_THEME[prog])
+        if cycle == 1:   # 微变:高把位组(后 5 音)前后轮换,和声不变
+            pat = pat[:8] + pat[9:] + pat[8:9]
+        for i, (p, d) in enumerate(pat):
+            is_tail = (i == len(pat) - 1)
+            v = vel + (10 if is_tail else 0)      # 句尾重音(贝斯手的落点)
+            dur = d * 0.92
+            s.note(B, p, v, t, dur)
+            if is_tail:
+                s.bend(B, 2, t, d * 0.92, 0.22)   # 句尾推弦 +2 半音
+            t += d
 
-    def riff16(bar, prog, vel):
-        for i, p in enumerate(RIFF16[prog]):
-            s.note(B, p, vel, bt(bar) + i * 0.25, 0.24)
+    def riff_dense(bar, prog, vel):
+        """档3 全 16 分密集驱动"""
+        for i, p in enumerate(BASS_DENSE[prog]):
+            v = vel + (10 if i % 4 == 0 else 0)   # 每拍头重音
+            s.note(B, p, v, bt(bar) + i * 0.25, 0.24)
 
     def strchord(bar, prog, vel, dur):
         c, v3, v5, r1 = VOICES[prog]
@@ -96,28 +110,28 @@ def build(s, bar0, cycle, ch):
         for i, ccv in enumerate(CC11_TIER):
             s.cc(name, 11, ccv, bt(bar0 + i * 4))
 
-    # 档1:8 分 riff
+    # 档1:主角主题(贝斯领奏)
     for i, prog in enumerate(TIERS[0]):
-        riff8(bar0 + i, prog, BASS_VEL[0])
-    # 档2:8 分 riff + 弦乐 2 拍长音和弦(4 个/4 小节;首小节低力度渐入)
+        riff_main(bar0 + i, prog, BASS_VEL[0])
+    # 档2:主角主题 + 弦乐 2 拍长音和弦(首小节低力度渐入)
     for i, prog in enumerate(TIERS[1]):
-        riff8(bar0 + 4 + i, prog, BASS_VEL[1])
+        riff_main(bar0 + 4 + i, prog, BASS_VEL[1])
         strchord(bar0 + 4 + i, prog, 44 if i == 0 else STR_VEL[0], 2.0)
-    # 档3:16 分加倍 + 弦乐整小节长音 + vln1 16 分五声音型
+    # 档3:全 16 分密集驱动(主角爆发)+ 弦乐整小节长音 + vln1 音型
     for i, prog in enumerate(TIERS[2]):
-        riff16(bar0 + 8 + i, prog, BASS_VEL[2])
+        riff_dense(bar0 + 8 + i, prog, BASS_VEL[2])
         strchord(bar0 + 8 + i, prog, STR_VEL[1], 4.0)
     for bar in range(bar0 + 8, bar0 + 12):
         fig_vel = 50 if bar == bar0 + 8 else 66   # 首小节渐入
         for k in range(16):
             s.note(V1, FIG[k & 3], fig_vel, bt(bar) + k * 0.25, 0.24)
-    # 呼吸:riff 减半(仅第 1/3 拍)+ m16 长音收尾;弦乐保持 Em 长音
-    for i in range(2):
-        bar = bar0 + 12 + i
-        s.note(B, 28, BASS_VEL[3], bt(bar), 0.48)
-        s.note(B, 28, BASS_VEL[3], bt(bar) + 2.0, 0.48)
-        strchord(bar, 'Em', STR_VEL[2], 4.0)
-    s.note(B, 40, BASS_VEL[3], bt(bar0 + 13) + 2.5, 1.5)  # m16 最后 2 拍 E2 长音 1.5 拍
+    # 呼吸:贝斯留白长音(m15 拍2 起 E1 长音 + bend 收尾;m16 拍3 起 E2 长音),弦乐保持
+    strchord(bar0 + 12, 'Em', STR_VEL[2], 4.0)
+    strchord(bar0 + 13, 'Em', STR_VEL[2], 4.0)
+    s.note(B, 28, 70, bt(bar0 + 12) + 1.0, 3.0)
+    s.bend(B, 2, bt(bar0 + 12) + 1.0, 3.0, 0.6)      # 长滑音:贝斯手收尾的余韵
+    s.note(B, 40, 78, bt(bar0 + 13) + 2.5, 1.5)
+    s.bend(B, 1, bt(bar0 + 13) + 2.5, 1.5, 0.35)
     return bar0 + 16
 
 
