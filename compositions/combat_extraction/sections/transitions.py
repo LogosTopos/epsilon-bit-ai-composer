@@ -25,14 +25,23 @@
                                                + 第 2 拍起休止;tempo 用于 BPM 回写(s.tempo)
   harmony_prehang(s, bar0, ch, chord='Em') .. 1 小节和声预挂:根音低音 2 拍(64)
                                                + pad 轻和声(vel 40)
+  time_fold(s, bar0, ch, chord='Em') ......... 1 小节 时间折叠(交火→时停,落 S-BT 入口):
+                                               低频挂留渐隐(bass 根音 + vla 五度,CC11 74→62
+                                               = 低通感)+ fx 五声下行快拂(60→44)+ 末拍
+                                               心跳 kick 双发预告(80/68);≤1 小节边界
+  time_unfold(s, bar0, ch) ................... 1 小节 时间展开(时停→交火):32 分 snare
+                                               滚奏渐强 2 拍(40→88)+ 密度骤回(kick/crash/
+                                               snare 交火短语,落母节/交火段入口)
 
-衔接矩阵 TRANSITIONS:节点 'S1'..'S6'(S3 = 母节),键 (from, to) → (元素名, 说明)。
-合法衔接(游戏流程内)8 条;其余组合一律 ('not_recommended', '游戏流程外')。
-demo 连播(六子节)依据本矩阵插转场,见 sections/demo_playthrough.py。
+衔接矩阵 TRANSITIONS:节点 'S1'..'S6'(S3 = 母节)+ 'S-BT'(时停),键 (from, to) →
+(元素名, 说明)。合法衔接(游戏流程内)11 条:6 正向 + 3 反向 + 2 时停
+(('S3','S-BT') → time_fold / ('S-BT','S3') → time_unfold);其余组合一律
+('not_recommended', '游戏流程外')。demo 连播(六子节)依据本矩阵插转场,
+见 sections/demo_playthrough.py。
 
 冒烟测试:python3 sections/transitions.py → /tmp/smk_trans.mid
-(4 小节 S1 风格骨架 + 连续插入 riser/down_fx/roll32/crash_stop/harmony_prehang,
-断言 0 音区告警 / 0 冲突 / 小节数正确)。运行前先清 __pycache__(缓存纪律)。
+(4 小节 S1 风格骨架 + 连续插入 riser/down_fx/roll32/crash_stop/harmony_prehang/
+time_fold/time_unfold,断言 0 音区告警 / 0 冲突 / 小节数正确)。运行前先清 __pycache__(缓存纪律)。
 """
 import sys, os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -150,6 +159,55 @@ def crash_stop(s, bar0, ch, **kw):
     return bar0 + 1
 
 
+def time_fold(s, bar0, ch, **kw):
+    """1 小节:交火→时停(时间折叠,落在 S-BT 入口)。高频打击乐抽离(无 snare/hat),
+    只剩低频挂留(bass 根音 + vla 五度,CC11 74→62 渐隐 = 低通感)+ fx 五声下行快拂
+    (vel 60→44,折叠手势)+ 末拍心跳 kick 双发预告(80/68 = S-BT 心跳模式)。
+    响应 ≤1 小节边界(时停是玩家主动触发)。"""
+    chord = kw.get('chord', 'Em')
+    assert chord in ROOT_LOW, f'time_fold: 未知和弦 {chord}'
+    for r in ('bass_electric', 'vla', 'fx', 'drums'):
+        assert r in ch, f'time_fold: 通道映射缺少角色 {r}'
+    t0 = (bar0 - 1) * 4
+    s.cc('bass_electric', 11, 74, t0)
+    s.cc('bass_electric', 11, 62, t0 + 3.5)
+    s.cc('vla', 11, 74, t0)
+    s.cc('vla', 11, 62, t0 + 3.5)
+    s.cc('fx', 11, 74, t0)
+    s.cc('fx', 11, 58, t0 + 3.5)
+    s.cc('drums', 11, 80, t0)
+    # 低频挂留(低通感:高频层淡出,只剩低音呼吸)
+    s.note('bass_electric', ROOT_LOW[chord], 44, t0, 3.5)
+    s.note('vla', SUSP[chord]['vla'], 36, t0, 3.5)
+    # fx 五声下行快拂(16 分 5 音,vel 60→44)——时间折叠手势
+    ascent = _penta_ascent(chord)
+    for i, p in enumerate(ascent[10:5:-1]):
+        s.note('fx', p, 60 - i * 4, t0 + 0.5 + i * 0.25, 0.2)
+    # 末拍心跳 kick 双发(80/68):时停心跳提前一拍预告,S-BT 0.0 接管
+    s.note('drums', 36, 80, t0 + 3.0, 0.2)
+    s.note('drums', 36, 68, t0 + 3.5, 0.18)
+    return bar0 + 1
+
+
+def time_unfold(s, bar0, ch, **kw):
+    """1 小节:时停→交火(时间展开,落在母节/交火段入口)。前 2 拍 snare 32 分
+    滚奏渐强(vel 40→88,16 音)→ 2.0 起密度骤回:kick 重击 + crash + snare 背拍
+    + kick 3+3+2(92/88/92 交火短语),下节 0.0 满配接管。"""
+    assert 'drums' in ch, 'time_unfold: 通道映射缺少角色 drums'
+    t0 = (bar0 - 1) * 4
+    s.cc('drums', 11, 84, t0)
+    # 32 分 snare 滚奏 2 拍(16 音,0.125 拍间隔,vel 40→88 渐强)
+    for i in range(16):
+        v = 40 + round(48 * i / 15)
+        s.note('drums', 38, v, t0 + i * 0.125, 0.09)
+    # 密度骤回(2.0-3.75 交火短语:kick 3+3+2 + crash + snare 背拍)
+    s.note('drums', 36, 92, t0 + 2.0, 0.2)
+    s.note('drums', 49, 84, t0 + 2.0, 1.0)
+    s.note('drums', 38, 88, t0 + 3.0, 0.2)
+    s.note('drums', 36, 92, t0 + 3.5, 0.2)
+    return bar0 + 1
+
+
 def harmony_prehang(s, bar0, ch, **kw):
     """1 小节和声预挂:进入方和弦根音低音 2 拍(vel 64)+ pad 轻和声(vel 40)。"""
     chord = kw.get('chord', 'Em')
@@ -178,8 +236,10 @@ _LEGAL = {
     ('S2', 'S1'): ('down_fx', '反向合法:降档回搜刮'),
     ('S3', 'S2'): ('down_fx', '反向合法:降档回探索'),
     ('S3', 'S1'): ('down_fx', '反向合法:降档回搜刮'),
+    ('S3', 'S-BT'): ('time_fold', '交火→时停:高频抽离+折叠淡出,1 小节(玩家主动,≤1 小节边界)'),
+    ('S-BT', 'S3'): ('time_unfold', '时停→交火:32 分滚奏渐强(2 拍)+ 密度骤回'),
 }
-_NODES = ('S1', 'S2', 'S3', 'S4', 'S5', 'S6')
+_NODES = ('S1', 'S2', 'S3', 'S4', 'S5', 'S6', 'S-BT')
 TRANSITIONS = {
     (a, b): _LEGAL.get((a, b), ('not_recommended', '游戏流程外'))
     for a in _NODES for b in _NODES
@@ -212,12 +272,14 @@ if __name__ == '__main__':
         for r in ('celli', 'vln2', 'synth_pad', 'bass_electric', 'drums'):
             s.cc(r, 11, 80, t0)
 
-    # 连续插入 5 个元素(各用不同和弦,覆盖全部和弦表)
+    # 连续插入 7 个元素(各用不同和弦,覆盖全部和弦表)
     b = riser(s, 5, CH, chord='Em')            # m5-6
     b = down_fx(s, b, CH, chord='C')           # m7
     b = roll32(s, b, CH)                       # m8
     b = crash_stop(s, b, CH, tempo=168, chord='G')   # m9
     b = harmony_prehang(s, b, CH, chord='D')   # m10
+    b = time_fold(s, b, CH, chord='Em')        # m11
+    b = time_unfold(s, b, CH)                  # m12
 
     buf = io.StringIO()
     with contextlib.redirect_stdout(buf):
@@ -225,8 +287,8 @@ if __name__ == '__main__':
         issues = s.report('/tmp/smk_trans.mid')   # flush 不返回自检数,须显式 report
     out = buf.getvalue()
     bad = out.count('[音区告警]') + out.count('[冲突]')
-    ok_bar = (b == 11)                          # 骨架 4 + riser 2 + 其余 1×4 = 10 小节,游标 11
+    ok_bar = (b == 13)                          # 骨架 4 + riser 2 + 其余 1×6 = 12 小节,游标 13
     print(out)
     print(f'smoke transitions: {"PASS" if (bad == 0 and issues == 0 and ok_bar) else "FAIL"}'
-          f' (告警+冲突={bad}, 自检冲突={issues}, 游标 b={b}, 期望 11)')
+          f' (告警+冲突={bad}, 自检冲突={issues}, 游标 b={b}, 期望 13)')
     sys.exit(0 if (bad == 0 and issues == 0 and ok_bar) else 1)

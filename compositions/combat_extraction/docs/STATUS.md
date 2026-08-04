@@ -13,7 +13,7 @@
 **温跃层/Blink 游戏集成已完成三轮迭代(~/Projects/blink-recovered:音乐状态机/时停低通/
 stinger/游戏内教程/死亡界面/K 键触控板适配),仓库已推 GitHub(LogosTopos/epsilon-bit-ai-composer)。**
 用户判定:子 Agent 最大缺陷 = ①滥用 stab ②瞎调音高;红线 = 子节弃 stab + 音高原位。
-下一步:S-BT 子弹时间子节(设计已定稿,后台 Agent 实现中)+ S4/S5 重做版已产出(v2,待用户试听验收)。
+下一步:S-BT 子弹时间子节 ✅ 已实现(待用户试听验收,含 time_fold/unfold 转场);S4/S5 重做版已产出(v2,待用户试听验收)。
 本会话全量交接见仓库根 docs/HANDOVER.md。
 
 ## 1. 当前成品(文件)
@@ -141,9 +141,13 @@ rm -f stems/stem_* && python3 mix_stems.py --mid in.mid --render-stems
 
 当前待办(优先级从高到低,详见仓库根 docs/HANDOVER.md §5):
 
-1. **S-BT 子弹时间子节**(设计已定稿,未实现):规格见 THERMOCLINE_MUSIC_DESIGN.md §3——
-   心跳 kick(8 分双发 68/80)+ 时间晶体(hook 高区闪烁,每 2 小节 1-2 音)+ 弦乐长音拉长;
-   无 16 分驱动;音乐不变速(168 保持),低通感靠减高频打击乐;time_fold/time_unfold 转场元素
+1. **S-BT 子弹时间子节 ✅ 已实现**(sections/s_bt.py → S_BT.mid/.mp3,待用户试听):
+   心跳 kick 每拍 8 分双发(80/68)+ 时间晶体(hook 每 2 小节 1-2 音,69-81 带)
+   + 弦乐 4.0 无隙长音 vel 40;无 16 分驱动;tempo 恒 168;hat/ghost/开镲/crash 全撤;
+   transitions.py 新增 time_fold(1 小节低频挂留渐隐 + 末拍心跳预告)/ time_unfold
+   (32 分 snare 滚奏渐强 2 拍 + 密度骤回),矩阵注册 ('S3','S-BT')/('S-BT','S3');
+   父会话修正:C 和弦晶体音 77(F5,母节未发声且非 C 五声)→ 79(G5 和弦音);
+   已程序化验证:全部音高 ⊆ 母节音高集、零音区告警、brass_stab 零引用
 2. **S4/S5 红线重做 ✅ 已产出 v2,待用户试听验收**:
    `S4_Crisis_v2.mid/.mp3`(心率 kick 双发 84/64 + bass 原位应答 + hook vel+4,12 层无 brass)、
    `S5_Extract_v2.mid/.mp3`(176 BPM + 32 分 hat,riser 母节 42-72 原版,无八度叠置);
