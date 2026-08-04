@@ -58,14 +58,14 @@ def sounding(evs, t):
 def accent_layers(by_ch, t):
     """t 时刻'起音'的重音层数(音头互锁语义):
     - 非打击乐(ch∉{9,11})
-    - bass(ch6):vel≥105 才是重音(3+3+2 位 110,其余 16 分 96-100 是织体)
+    - bass(ch6):vel≥110 才是重音(3+3+2 位 116,其余 16 分 104 是织体)
     - 其他层:vel≥84(hook 重音 86-94 / brass 88 / M3 96 / riser 84-88)
     """
     n = 0
     for ch, evs in by_ch.items():
         if ch in PERC:
             continue
-        thr = 105 if ch == 6 else 84
+        thr = 110 if ch == 6 else 84
         if any(abs(on - t) <= TOL and v >= thr for (on, p, v, d) in evs):
             n += 1
     return n

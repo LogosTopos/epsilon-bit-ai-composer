@@ -69,7 +69,7 @@ ECHO_PAIR = {
 # 回声小节:每轮 bar1/bar3(rel 0/2/4/6/8/10/12/14)
 ECHO_RELS = (0, 2, 4, 6, 8, 10, 12, 14)
 
-BASS_VEL = 102          # 主角,全场最响;重音 +10 = 112(humanize ±2 后 <105 阈值不误计)
+BASS_VEL = 104          # 主角,全场最响;重音 +12 = 116(humanize ±2 后 <127)
 STR_VEL = 58            # 弦乐长音(满配统一)
 CC11_TIER = (80, 82, 84, 82)   # 轮起点 CC11 微弧
 
@@ -83,8 +83,9 @@ def build(s, bar0, cycle, ch):
         return (bar - 1) * 4
 
     def riff_dense(bar, mode, prog, vel, answer=False, shift=False):
-        """16 分密集驱动(模式渐进);重音 3+3+2(0/1.5/3.0)或移位 3+2+3(0/1.25/2.75);
-        answer:末 4 音换高把位应答(对话链);shift:每轮 bar3 重音移位(句法转)"""
+        """16 分密集驱动(模式渐进);重音 3+3+2(0/1.5/3.0)或移位 3+2+3(0/1.5/2.5);
+        answer:末 4 音换高把位应答(对话链);shift:每轮 bar3 重音移位(句法转)
+        v8.1:重音音符加长到 0.36(低音区 16 分短音无音高可辨度,长音头才听得见)"""
         pat = BASS_MODES[mode][prog]
         acc = (0, 6, 10) if shift else (0, 6, 12)   # 3+2+3:0/1.5/2.5(间隔 3,2,3 个 8 分)
         if answer:
@@ -93,8 +94,9 @@ def build(s, bar0, cycle, ch):
             if answer and i >= 12:
                 v = ANSWER_VEL[i - 12]
             else:
-                v = vel + (10 if i in acc else 0)
-            s.note(B, p, v, bt(bar) + i * 0.25, 0.24)
+                v = vel + (12 if i in acc else 0)
+            dur = 0.36 if (i in acc or (answer and i >= 12)) else 0.24
+            s.note(B, p, v, bt(bar) + i * 0.25, dur)
 
     def strchord(bar, prog, vel, dur):
         c, v3, v5, r1 = VOICES[prog]
@@ -129,9 +131,9 @@ def build(s, bar0, cycle, ch):
     # m18(rel 15,D 小节)回环:用 D 和弦 pattern(原 Em pattern 的 43 与 D 层 54 大七度),
     # 尾 4 个 16 分降力(3.0 重音保留但轻,衔接 m3 Em)
     for k in range(16):
-        v = 102 + (10 if k in (0, 6, 12) else 0)
+        v = 104 + (12 if k in (0, 6, 12) else 0)
         if k >= 12:
-            v -= 10
+            v -= 12
         s.note(B, BASS_P1['D'][k], v, bt(bar0 + 15) + k * 0.25, 0.24)
 
     return bar0 + 16

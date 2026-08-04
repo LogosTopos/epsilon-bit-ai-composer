@@ -28,10 +28,13 @@ STEMS = [
     ('atmosphere', [0, 1, 13, 14]),
 ]
 
-# 混音链(v7.1 音量平衡,用户反馈:鼓和贝斯要更大)
+# 混音链(v8.1 贝斯可听性,用户反馈:听不见贝斯手)
+# 关键修复:sidechain 从'抽干式'(threshold 0.03/ratio 8)改为'温柔让位'
+# (0.08/3)——bass 重音与 kick 同拍,旧参数把 bass 最重要音符全压掉了
 CHAIN = {
     'drums':      'acompressor=threshold=-18dB:ratio=3:attack=5:release=100,volume=1.28',
-    'bass':       'highpass=f=30,volume=1.55',   # 主角:贝斯手被看见(用户:再大点)
+    # bass:中低频峰提升(110Hz +3dB,音高可辨)+ 音量 1.65(主角)
+    'bass':       'highpass=f=30,equalizer=f=110:t=q:w=1:g=3,volume=1.65',
     'strings':    'highpass=f=60,volume=0.75',
     'stab':       'acompressor=threshold=-22dB:ratio=2:attack=10:release=150,volume=1.15',
     'atmosphere': 'volume=0.7',
@@ -75,8 +78,9 @@ def mix(out_wav):
     for i, (name, _) in enumerate(STEMS):
         inputs += ['-i', f'stems/stem_{name}.wav']
         flt.append(f'[{i}:a]{CHAIN[name]}[s{i}]')
-    # bass 以 drums 为 key 做 sidechain(下标:drums=0, bass=1)
-    flt.append('[s1][s0]sidechaincompress=threshold=0.03:ratio=8:attack=4:release=150[bass_sc]')
+    # bass 以 drums 为 key 做 sidechain(温柔让位:threshold 0.08/ratio 3/attack 8ms——
+    # 不再抽干 bass 重音;鼓点保留冲击但 bass 音头可过)
+    flt.append('[s1][s0]sidechaincompress=threshold=0.08:ratio=3:attack=8:release=120[bass_sc]')
     others = ''.join(f'[s{i}]' for i in range(len(STEMS)) if i != 1)
     flt.append(f'[bass_sc]{others}amix=inputs={len(STEMS)}:normalize=0[mix]')
     flt.append('[mix]acompressor=threshold=-16dB:ratio=2:attack=10:release=200,alimiter=limit=0.95[out]')
