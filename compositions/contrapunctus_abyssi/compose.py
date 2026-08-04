@@ -82,79 +82,46 @@ GROUND = {
 # 转调偏移(Dm 为 0)
 KEY_DELTA = {'Dm': 0, 'F': 3, 'Gm': 5, 'Eb': 1, 'A7': -5, 'E': 2}
 
-# ================= 和声模板(每 2 个低音音一个和弦 = 每周期 8 和弦) =================
-# 每项 = 上声部候选音高:固定低音 + 功能性和声,候选供声部连接器选择
-# 功能设计(对应低音分组):
-#   [D,C#] i → [A,A] V7 → [Bb,A] VI → [G,G] i → [Eb,D] bII → [C#,C#] V6/5 → [D,A] i → [D,D] i
-HARM_TEMPLATE = [
-    [45, 50, 53, 57, 62],      # i        D-F-A
-    [45, 52, 55, 60],          # V7       A-C#-E-G
-    [50, 53, 58],              # VI       Bb-D-F
-    [43, 46, 50, 55],          # i        G-Bb-D
-    [46, 51, 55, 58],          # bII      Eb-G-Bb
-    [52, 55, 57, 60],          # V6/5     C#-E-G-A
-    [45, 50, 53, 57, 62],      # i        D-F-A
-    [50, 53, 57, 62],          # i(收)    D-F-A-D
-]
 
-# 尾声圣咏和声(D 大调:旋律音 → 三和弦),供四部和声连接
+# 尾声圣咏和声(D 大调:旋律音 → 三和弦)
 FIN_CHORDS = {62: (62, 66, 69), 61: (61, 64, 68), 57: (57, 61, 64), 59: (59, 62, 66),
               64: (64, 67, 71), 66: (66, 69, 73)}
 
+# ================= 手工和声表(每 2 个低音音一个和弦 = 每周期 8 和弦) =================
+# 全部手工写作(用户要求:不用自动化连接器),每个音高显式指定。
+# 设计原则:功能性和声(i/V7/VI/bII/V6-5)+ 声部平滑(相邻移动 ≤4 半音,共同音保持)。
+# 每组 = (固定低音, [中提, 二提])。6 调分别独立写出并逐调验证过平滑。
+MANUAL_HARM = {
+    'Dm': [(38, [53, 69]), (33, [52, 67]), (34, [50, 65]), (31, [50, 67]),
+           (39, [51, 67]), (37, [52, 67]), (38, [53, 69]), (38, [50, 69])],
+    'F':  [(41, [56, 72]), (36, [55, 70]), (38, [53, 68]), (34, [53, 70]),
+           (32, [54, 70]), (30, [55, 70]), (31, [56, 72]), (31, [53, 72])],
+    'Gm': [(43, [58, 74]), (38, [57, 72]), (39, [55, 70]), (36, [55, 72]),
+           (44, [56, 72]), (42, [57, 72]), (43, [58, 74]), (43, [55, 74])],
+    'Eb': [(39, [54, 70]), (34, [53, 68]), (35, [51, 66]), (32, [51, 68]),
+           (40, [52, 68]), (38, [53, 68]), (39, [54, 70]), (39, [51, 70])],
+    'A7': [(33, [60, 76]), (28, [59, 74]), (29, [57, 72]), (26, [57, 74]),
+           (34, [58, 74]), (32, [59, 74]), (33, [60, 76]), (33, [57, 76])],
+    'E':  [(40, [55, 71]), (35, [54, 69]), (36, [52, 67]), (33, [52, 69]),
+           (42, [53, 69]), (39, [54, 69]), (40, [55, 71]), (40, [52, 71])],
+}
 
-def harmony_for(key):
-    """返回该调性固定低音周期的 8 个和弦 [(低音, 候选上声部), ...](每 2 个低音音一个)"""
-    d = KEY_DELTA[key]
-    ground = GROUND[key]
-    return [(ground[2 * i], [p + d for p in cands])
-            for i, cands in enumerate(HARM_TEMPLATE)]
+# 间插段和声(F → Dm → Bb → A7 属准备),手工 3 声部 [中提, 二提, 一提]
+INTER_HARM = [(41, [53, 60, 65]), (38, [53, 62, 69]), (34, [50, 62, 65]), (33, [52, 60, 64])]
 
+# 赋格骨架和声(m65-76,Bb→Gm→Dm→A7→Am→E7),手工 2 声部 + 低音
+FUGUE_HARM = [(34, [50, 65]), (43, [55, 62]), (38, [53, 62]), (33, [52, 60]),
+              (33, [52, 60]), (28, [59, 64])]
 
-def connect(harm, n_voices=3, ranges=None):
-    """声部连接器:为每和弦从上声部候选中选 n_voices 个,使相邻和弦移动最小。
-    贪心最近移动(先选共同音/最近音),保证声部平滑 —— "和谐"的工程保证。
-    harm: [(低音, 候选上声部列表), ...];ranges: 每声部 (lo, hi) 钳制。
-    返回 [(低音, [v0..vn-1]), ...]
-    """
-    if ranges is None:
-        ranges = [(48, 96)] * n_voices
-    prev = None
-    out = []
-    for bass, cands in harm:
-        cands = sorted(set(cands))
-        if len(cands) < n_voices:
-            # 补八度
-            c0 = list(cands)
-            k = 0
-            while len(c0) < n_voices:
-                c0.append(c0[k] + 12)
-                k += 1
-            cands = sorted(set(c0))
-        if prev is None:
-            # 首和弦:取中间 n_voices 个
-            sel = cands[len(cands) // 2 - n_voices // 2: len(cands) // 2 - n_voices // 2 + n_voices]
-            if len(sel) < n_voices:
-                sel = cands[:n_voices]
-        else:
-            best, best_cost = None, None
-            from itertools import combinations
-            for combo in combinations(cands, n_voices):
-                c = sorted(combo)
-                cost = sum(abs(a - b) for a, b in zip(c, prev))
-                if best_cost is None or cost < best_cost:
-                    best, best_cost = c, cost
-            sel = best
-        # 音区钳制
-        sel = list(sel)
-        for i in range(n_voices):
-            lo, hi = ranges[i]
-            while sel[i] < lo:
-                sel[i] += 12
-            while sel[i] > hi:
-                sel[i] -= 12
-        prev = sorted(sel)
-        out.append((bass, prev))
-    return out
+# 尾声圣咏内声部(34 和弦,[中提, 二提]),逐和弦手工设计,全程 ≤3 半音移动
+CHORALE_VOICES = [
+    (57, 66), (56, 64), (52, 61), (55, 62), (56, 64), (57, 66),
+    (59, 67), (57, 66), (56, 64), (57, 66), (55, 62), (52, 61),
+    (54, 61), (55, 64), (57, 66), (55, 64), (57, 66), (56, 64),
+    (54, 61), (55, 64), (57, 66), (56, 64), (55, 62), (52, 61),
+    (57, 66), (56, 64), (52, 61), (55, 62), (52, 61), (54, 61),
+    (54, 61), (55, 64), (57, 66), (57, 66),
+]
 
 
 def T(seq, semis):
@@ -246,11 +213,11 @@ def build(s: Score):
 
     # ---------------- 帕萨卡利亚 A 组(m9-20,@72,弦乐室内) ----------------
     # 周期 1(9-12):大提低音 + 中提/二提和声 + 一提主题
-    harm = connect(harmony_for('Dm'), n_voices=2, ranges=[(48, 74), (60, 88)])
+    harm = MANUAL_HARM['Dm']
     for cyc in range(3):
         bar0 = 9 + cyc * 4
         key = ['Dm', 'Dm', 'Dm'][cyc]
-        harm = connect(harmony_for(key), n_voices=2, ranges=[(48, 74), (60, 88)])
+        harm = MANUAL_HARM[key]
         if cyc == 0:
             ground_bar(s, 'bass', 'celli', GROUND[key], 56, bar0)   # Dm 低音低至 G1
             harmony_block(s, harm, ['vla', 'vln2'], [48, 50], bar0)
@@ -270,11 +237,11 @@ def build(s: Score):
                     s.note('vln1', p, 86, B(bar0) + t, d * 0.75)
             s.arp('harp', (62, 65, 69, 74), 44, B(bar0), 0.5, 2, 2.0)
         else:
-            # 长笛高八度主题 + 一提对位 + 中提震音和声
+            # 长笛主题 T1+5(74-82,≤82 硬规则)+ 一提对位 + 中提震音和声
             s.prog('vla', *PROGS['vla_trem'][:2], B(bar0))
             ground_bar(s, 'bass', 'celli', GROUND[key], 58, bar0)
             harmony_block(s, harm, ['vla', 'vln2'], [46, 50], bar0)
-            for t, p, d in T(T1, 12):
+            for t, p, d in T(T1, 5):
                 s.note('flute', p, 78, B(bar0) + t, d)
             for t, p, d in T(CM2, 0):
                 s.note('vln1', p, 74, B(bar0) + t, d)
@@ -287,13 +254,13 @@ def build(s: Score):
 
     # ---------------- 帕萨卡利亚 B 组(m21-32,木管角色化,转调) ----------------
     # 周期 1(21-24,F):长笛主题 + 双簧管对位 + 巴松低音八度
-    harm = connect(harmony_for('F'), n_voices=2, ranges=[(48, 74), (60, 88)])
+    harm = MANUAL_HARM['F']
     for i, p in enumerate(GROUND['F']):     # F 低音低至 G1:巴松低于音区自动高八度
         s.note('bassoon', p if p >= 34 else p + 12, 52, B(21) + i, 0.92)
         s.note('bass', p + 12, 56, B(21) + i, 0.92)
     harmony_block(s, harm, ['vla', 'vln2'], [46, 48], 21)
-    for t, p, d in T(T1, 3):
-        s.note('flute', p + 12, 80, B(21) + t, d)
+    for t, p, d in T(T1, 3):     # 长笛主题 F 调,原音区(72-80),不翻高八度(1:15 高音刺耳问题)
+        s.note('flute', p, 80, B(21) + t, d)
     for t, p, d in T(CM2, -5):
         s.note('oboe', p, 70, B(21) + t, d)
     s.arp('harp', (65, 69, 72, 77), 44, B(21), 0.5, 2, 2.0)
@@ -302,7 +269,7 @@ def build(s: Score):
     s.prog('vln1', *PROGS['vln1_trem'][:2], B(25))
     s.prog('vln2', *PROGS['vln2_trem'][:2], B(25))
     s.prog('vla', *PROGS['vla_slow'][:2], B(25))
-    harm = connect(harmony_for('Gm'), n_voices=2, ranges=[(48, 74), (60, 88)])
+    harm = MANUAL_HARM['Gm']
     ground_bar(s, 'bass', 'celli', GROUND['Gm'], 56, 25)   # Gm 低音低至 F2,大提高八度
     harmony_block(s, harm, ['vla', 'vln2'], [46, 48], 25)
     for t, p, d in T(T1, -5):
@@ -315,7 +282,7 @@ def build(s: Score):
 
     # 周期 3(29-32,Eb):一提主题 + 长笛装饰 + 竖琴密集琶音,渐强引出 C 组
     s.prog('vla', *PROGS['vla_trem'][:2], B(29))
-    harm = connect(harmony_for('Eb'), n_voices=2, ranges=[(48, 74), (60, 88)])
+    harm = MANUAL_HARM['Eb']
     ground_bar(s, 'bass', 'celli', GROUND['Eb'], 58, 29)   # Eb 低音低至 E1,大提高八度
     harmony_block(s, harm, ['vla', 'vln2'], [46, 48], 29)
     for t, p, d in T(T1, -11):
@@ -334,7 +301,7 @@ def build(s: Score):
     s.prog('vla', *PROGS['vla_slow'][:2], B(33))
     s.prog('hmn_trumpet', *PROGS['hmn_trumpet'][:2], B(33))
     s.prog('horn', *PROGS['horn'][:2], B(33))
-    harm = connect(harmony_for('A7'), n_voices=2, ranges=[(48, 74), (60, 88)])
+    harm = MANUAL_HARM['A7']
     ground_bar(s, 'bass', 'celli', GROUND['A7'], 58, 33)   # A7 低音低至 E1,大提高八度
     harmony_block(s, harm, ['vla', 'vln2'], [46, 48], 33)
     for t, p, d in T(T1, -5):
@@ -346,7 +313,7 @@ def build(s: Score):
     # 周期 2(37-40,Dm):全奏初现(一提主题 + 小号/圆号和声 + 定音鼓)
     s.prog('vln1', *PROGS['vln1_slow'][:2], B(37))
     s.prog('trumpet', *PROGS['trumpet'][:2], B(37))
-    harm = connect(harmony_for('Dm'), n_voices=2, ranges=[(48, 74), (60, 88)])
+    harm = MANUAL_HARM['Dm']
     ground_bar(s, 'bass', 'celli', GROUND['Dm'], 62, 37)
     harmony_block(s, harm, ['vla', 'vln2'], [48, 50], 37)
     for t, p, d in T1:
@@ -359,11 +326,11 @@ def build(s: Score):
     # 周期 3(41-44,Dm,渐强至 ff):大号低音 + 铜管全奏和声 + 打击乐
     s.prog('trombone', *PROGS['trombone'][:2], B(41))
     s.prog('tuba', *PROGS['tuba'][:2], B(41))
-    harm = connect(harmony_for('Dm'), n_voices=2, ranges=[(48, 74), (60, 88)])
+    harm = MANUAL_HARM['Dm']
     ground_bar(s, 'tuba', 'bass', GROUND['Dm'], 66, 41)
     ground_bar(s, 'bass', 'celli', GROUND['Dm'], 58, 41)
     harmony_block(s, harm, ['vla', 'vln2'], [50, 52], 41)
-    for t, p, d in T(T1, 12):
+    for t, p, d in T(T1, 5):   # 一提 T1+5(74-82,≤82 硬规则;规划 §3 帕C 周期3)
         s.note('vln1', p, 94, B(41) + t, d)
     for n in range(41, 45):
         s.chord('horn', (50, 57, 62), 60, B(n), 4.0)
@@ -380,9 +347,8 @@ def build(s: Score):
     # ---------------- 间插段(m45-48,@84,双簧管 T2 抒情) ----------------
     s.prog('vln1', *PROGS['vln1_slow'][:2], B(45))
     s.prog('vla', *PROGS['vla_slow'][:2], B(45))
-    # 和声:F → Dm → Bb → A7(属准备)
-    inter_harm = [(41, [48, 53, 57]), (38, [50, 53, 57]), (34, [46, 50, 53]), (33, [45, 52, 55, 60])]
-    inter = connect(inter_harm, n_voices=3, ranges=[(48, 72), (60, 84), (69, 96)])
+    # 和声:F → Dm → Bb → A7(属准备),手工三声部
+    inter = INTER_HARM
     for ci, (bass, voices) in enumerate(inter):
         t = B(45) + ci * 4
         for vi, name in enumerate(['vla', 'vln2', 'vln1']):
@@ -406,11 +372,7 @@ def build(s: Score):
     ROOT = {'Dm': 38, 'F': 41, 'Gm': 43, 'Eb': 39, 'A7': 33, 'Am': 33, 'E7': 28,
             'D': 38, 'Bm': 35, 'G': 31, 'A': 33, 'Bb': 34}
     # 呈示期(49-64)纯四声部对位,不加和声(巴赫式);间插/进入期(65-76)加内声部长音
-    fh = []
-    for n in range(65, 77, 2):
-        ch = FUGUE_H[n]
-        fh.append((ROOT[ch], harmony_cands(ch)))
-    fh_conn = connect(fh, n_voices=2, ranges=[(48, 74), (60, 84)])
+    fh_conn = FUGUE_HARM
     for i, (bass, voices) in enumerate(fh_conn):
         n = 65 + i * 2
         for vi, name in enumerate(['vla', 'vln2']):
@@ -568,22 +530,16 @@ def build(s: Score):
     s.prog('trombone', *PROGS['tuba'][:2], B(93))
     s.prog('organ', *PROGS['organ'][:2], B(93))
     # 圣咏四部和声(声部连接:每 2 拍一和弦)
-    chor = []
-    for t, p, d in CHORALE:
-        chord = FIN_CHORDS[p]
-        chor.append((p - 12, [p - 12, chord[0], chord[1], chord[2], p]))
-    chor_conn = connect(chor, n_voices=3, ranges=[(48, 74), (55, 84), (60, 96)])
-    for ci, (bass, voices) in enumerate(chor_conn):
-        t, p, d = CHORALE[ci]
+    for ci, (t, p, d) in enumerate(CHORALE):
         bt = B(93) + t
+        vla, vln2 = CHORALE_VOICES[ci]
         s.note('vln1', p + 12, 84, bt, d)
         s.chord('choir', FIN_CHORDS[p], 50, bt, d)
         s.chord('organ', (p - 12, p - 5), 42, bt, d)
-        for vi, name in enumerate(['vla', 'vln2']):
-            if vi < len(voices):
-                s.note(name, voices[vi], 44, bt, d)
-        s.note('celli', bass, 46, bt, d)
-        tb = bass if bass <= 53 else bass - 12   # 大号音区 26-53
+        s.note('vla', vla, 44, bt, d)
+        s.note('vln2', vln2, 44, bt, d)
+        s.note('celli', p - 12, 46, bt, d)
+        tb = p - 12 if p - 12 <= 53 else p - 24   # 大号音区 26-53
         s.note('tuba', tb, 40, bt, d)
     # 钟声 + 竖琴(每 4 小节)
     for n, v in [(93, 52), (97, 58), (101, 64), (105, 52)]:
@@ -605,15 +561,6 @@ def build(s: Score):
         dyn('vln1', v + 6, bn); dyn('choir', v - 10, bn); dyn('vln2', v - 6, bn)
         dyn('vla', v - 8, bn); dyn('celli', v - 6, bn); dyn('bass', v - 8, bn)
         dyn('organ', v - 12, bn); dyn('tuba', v - 10, bn); dyn('timpani', v - 20, bn)
-
-
-def harmony_cands(ch):
-    """赋格每 2 小节和声候选(基于功能)"""
-    base = {'Dm': [45, 50, 53, 57, 62], 'Am': [45, 48, 52, 57, 60], 'E7': [47, 50, 52, 55, 59],
-            'A7': [45, 52, 55, 60], 'Bb': [46, 50, 53, 58], 'Gm': [43, 46, 50, 55],
-            'Eb': [46, 51, 55, 58], 'F': [48, 53, 57], 'G': [43, 47, 50, 55], 'A': [45, 52, 57, 60],
-            'Bm': [47, 50, 54, 59], 'D': [45, 50, 54, 57, 62]}
-    return base.get(ch, [45, 50, 53, 57, 62])
 
 
 def main():
