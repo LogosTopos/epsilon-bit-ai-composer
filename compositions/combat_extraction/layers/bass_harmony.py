@@ -99,17 +99,18 @@ def build(s, bar0, cycle, ch):
     # 档1:8 分 riff
     for i, prog in enumerate(TIERS[0]):
         riff8(bar0 + i, prog, BASS_VEL[0])
-    # 档2:8 分 riff + 弦乐 2 拍长音和弦(4 个/4 小节)
+    # 档2:8 分 riff + 弦乐 2 拍长音和弦(4 个/4 小节;首小节低力度渐入)
     for i, prog in enumerate(TIERS[1]):
         riff8(bar0 + 4 + i, prog, BASS_VEL[1])
-        strchord(bar0 + 4 + i, prog, STR_VEL[0], 2.0)
+        strchord(bar0 + 4 + i, prog, 44 if i == 0 else STR_VEL[0], 2.0)
     # 档3:16 分加倍 + 弦乐整小节长音 + vln1 16 分五声音型
     for i, prog in enumerate(TIERS[2]):
         riff16(bar0 + 8 + i, prog, BASS_VEL[2])
         strchord(bar0 + 8 + i, prog, STR_VEL[1], 4.0)
     for bar in range(bar0 + 8, bar0 + 12):
+        fig_vel = 50 if bar == bar0 + 8 else 66   # 首小节渐入
         for k in range(16):
-            s.note(V1, FIG[k & 3], 66, bt(bar) + k * 0.25, 0.24)
+            s.note(V1, FIG[k & 3], fig_vel, bt(bar) + k * 0.25, 0.24)
     # 呼吸:riff 减半(仅第 1/3 拍)+ m16 长音收尾;弦乐保持 Em 长音
     for i in range(2):
         bar = bar0 + 12 + i

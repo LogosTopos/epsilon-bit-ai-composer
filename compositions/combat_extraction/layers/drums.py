@@ -53,14 +53,18 @@ def build(s, bar0, cycle, ch):
             s.note('drums', 42, 66, B(i, j * 0.25), 0.15)  # hat 16分
     s.note('drums', 49, 94, B(4, 0.0), 1.2)                # m7 起点 crash
     if cycle == 0:
-        # m10 末 1 拍 16分 snare fill
+        # m10 末 1 拍 16分 snare fill + kick 预击(渐强,直入档3 密度翻倍)
         for j in range(4):
             s.note('drums', 38, 90, B(7, 3.0 + j * 0.25), 0.2)
+        for j in range(3):
+            s.note('drums', 36, 72 + j * 6, B(7, 3.25 + j * 0.25), 0.2)
     else:
-        # m10: 2 拍 3+3+2 十六分滚奏(重音在 16分位 0/3/6 → 拍 2.0/2.75/3.5)
+        # m10: 2 拍 3+3+2 十六分滚奏(重音在 16分位 0/3/6 → 拍 2.0/2.75/3.5)+ kick
         for j in range(8):
             vel = 94 if j in (0, 3, 6) else 84
             s.note('drums', 38, vel, B(7, 2.0 + j * 0.25), 0.2)
+        for j in range(3):
+            s.note('drums', 36, 60 + j * 8, B(7, 3.25 + j * 0.25), 0.2)
 
     # ---------- 档3 (i=8..11): kick 8分驱动 + 每小节 crash + m14 fill ----------
     s.cc('drums', 11, 84, B(8, 0.0))
@@ -86,12 +90,16 @@ def build(s, bar0, cycle, ch):
             s.note('drums', 38, vel, B(11, 2.0 + j * 0.125), 0.09)
 
     # ---------- 呼吸 (i=12..15): 鼓抽离,回落不归零 ----------
+    # 渐变:第一小节(m15)kick 每拍 1 发 + hat 8分;第二小节(m16)kick 每 2 拍 1 发 + hat 4分
     s.cc('drums', 11, 66, B(12, 0.0))
-    for i in range(12, 16):
-        for b in (0.0, 2.0):
-            s.note('drums', 36, 76 + dk, B(i, b), 0.2)     # kick 减半:每 2 拍一发
-        for j in range(8):
-            s.note('drums', 42, 72, B(i, j * 0.5), 0.15)   # hat 8分
+    for b in (0.0, 1.0, 2.0, 3.0):
+        s.note('drums', 36, 78 + dk, B(12, b), 0.2)
+    for b in (0.0, 2.0):
+        s.note('drums', 36, 74 + dk, B(13, b), 0.2)
+    for j in range(8):
+        s.note('drums', 42, 72, B(12, j * 0.5), 0.15)
+    for j in range(4):
+        s.note('drums', 42, 66, B(13, j * 1.0), 0.15)
     # 呼吸段无 snare / 无 crash(§3 cymbal 抽离;§7 m18 第 4 拍无重音)
 
     return bar0 + 16
