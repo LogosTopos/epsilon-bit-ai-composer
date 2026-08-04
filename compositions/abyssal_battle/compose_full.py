@@ -74,6 +74,9 @@ def prog(ch, p, beat):
 def bar(n):
     return (n - 1) * BPB
 
+def bar_of(beat):
+    return int(beat // BPB) + 1
+
 # ---------- 鼓 ----------
 KICK, SNARE, HH, OH, CRASH, RIDE, TOM1, TOM2 = 36, 38, 42, 46, 49, 51, 45, 47
 def drum(n, vel, beat, dur=0.1):
@@ -181,6 +184,20 @@ CHORD_TONES = {'Am': [57, 60, 64], 'F': [53, 57, 60], 'C': [60, 64, 67],
                'G': [55, 59, 62], 'Dm': [50, 53, 57], 'E7': [56, 59, 62]}
 CHORD_TONES_LO = {'Am': [45, 52, 57], 'F': [41, 48, 53], 'C': [48, 55, 60],
                   'G': [43, 50, 55], 'Dm': [50, 57, 62], 'E7': [40, 47, 52]}
+CHORD_PC = {'Am': {9, 0, 4}, 'F': {5, 9, 0}, 'C': {0, 4, 7}, 'G': {7, 11, 2},
+            'Dm': {2, 5, 9}, 'E7': {4, 8, 11, 2}}   # 音级集合(A=9 C=0 E=4 …)
+
+def counter_melody(p, chord):
+    """铜管副旋律:下方六度;若与非和弦音冲突,就近归位到和弦音(±2 半音内)"""
+    target = p - 9
+    pc = target % 12
+    if pc in CHORD_PC[chord]:
+        return target
+    for d in (1, 2):
+        for cand in (target - d, target + d):
+            if cand % 12 in CHORD_PC[chord]:
+                return cand
+    return target   # 找不到就保留原色彩音
 
 def bass_riff(sb, ch, vel=96):
     r = BASS[ch]
@@ -445,19 +462,23 @@ for n in range(65, 71):
     multi(4, [(x, 58) for x in CHORD_TONES_LO[CHORDS[n]]], bar(n), 4.0)
 for t, p, d in phI3():
     note(0, p, 82, t, d)
-# 留白(71-72)+ 滚奏衔接高潮:末拍低音垫 + crash 落在 73 强拍
+# 留白(71-72)+ 滚奏衔接高潮:和声预挂 + crash 落在 73 强拍
 snare_roll(bar(72), 4, 40, 112)
+note(6, 41, 60, bar(72) + 2, 2.0)    # 和声预挂:滚奏后半已落到 F 低音
 note(6, 45, 66, bar(72) + 3.5, 0.5)  # 低音预垫(提前抓住新速度)
 prog(2, 48, bar(72) + 2)             # 弦乐音色提前切回(滚奏期间,无听觉断裂)
 
-# 高潮(73-96,138):全奏 + 铜管六度对位——前 2 小节吉他弱档,渐进叠满
+# 高潮(73-96,138):全奏 + 铜管六度对位——分层渐进进入:
+#   bar73 骨架(鼓/低音/弦乐/旋律/铜管弱档)→ bar74-75 加吉他+合唱 → bar76 全满
 for n in range(73, 97):
     pattern_c(bar(n))
     bass_riff(bar(n), CHORDS[n], 108)
     strings_stab(bar(n), CHORDS[n], 80)
-    guitar_power(bar(n), CHORDS[n], 72 if n in (73, 74) else 80)
-    multi(4, [(x, 72) for x in CHORD_TONES_LO[CHORDS[n]]], bar(n), 4.0)
-    multi(3, [(x, 84) for x in CHORD_TONES[CHORDS[n]]], bar(n), 1.0)
+    if n >= 74:                                          # 吉他分层进入
+        guitar_power(bar(n), CHORDS[n], 72 if n in (74, 75) else 80)
+    if n >= 75:                                          # 合唱分层进入
+        multi(4, [(x, 60 if n in (75, 76) else 72) for x in CHORD_TONES_LO[CHORDS[n]]], bar(n), 4.0)
+    multi(3, [(x, 70 if n == 73 else 84) for x in CHORD_TONES[CHORDS[n]]], bar(n), 1.0)
     note(3, 57, 90, bar(n) + 3, 0.8)
     if n % 4 == 1:
         drum(CRASH, 104, bar(n), 1.0)
@@ -467,11 +488,12 @@ for seq, v in ((phC1(), 100), (phC2(), 102), (phC3(), 103), (phC4(), 100),
                (phC5(), 103), (phC6(), 104)):
     for t, p, d in seq:
         note(0, p, v, t, d)
-# 铜管副旋律:主旋律下方六度(对位)
+# 铜管副旋律:主旋律下方六度(对位),冲突音归位到和弦音
 for seq, v in ((phC1(), 82), (phC3(), 84), (phC5(), 84)):
     for t, p, d in seq:
         if p - 9 >= 48:
-            note(3, p - 9, v, t, d * 0.9)
+            cp = counter_melody(p, CHORDS[bar_of(t)])
+            note(3, cp, v, t, d * 0.9)
 
 # 冲刺(97-104,142→150):密度最大
 for n in range(97, 105):
