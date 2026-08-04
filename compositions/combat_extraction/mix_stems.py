@@ -28,12 +28,12 @@ STEMS = [
     ('atmosphere', [0, 1, 13, 14]),
 ]
 
-# 混音链
+# 混音链(v7.1 音量平衡,用户反馈:鼓和贝斯要更大)
 CHAIN = {
-    'drums':      'acompressor=threshold=-18dB:ratio=3:attack=5:release=100,volume=1.0',
-    'bass':       'highpass=f=30,volume=1.35',   # 主角:贝斯手被看见
+    'drums':      'acompressor=threshold=-18dB:ratio=3:attack=5:release=100,volume=1.28',
+    'bass':       'highpass=f=30,volume=1.55',   # 主角:贝斯手被看见(用户:再大点)
     'strings':    'highpass=f=60,volume=0.75',
-    'stab':       'acompressor=threshold=-22dB:ratio=2:attack=10:release=150,volume=0.9',
+    'stab':       'acompressor=threshold=-22dB:ratio=2:attack=10:release=150,volume=1.15',
     'atmosphere': 'volume=0.7',
 }
 

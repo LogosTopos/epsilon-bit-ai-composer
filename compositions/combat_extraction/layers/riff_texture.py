@@ -28,14 +28,16 @@ M2 = ((57, 58, 57, 58), (57, 58, 62, 58))
 M2_SLOTS = (0.75, 1.25, 2.75, 3.25)   # 互锁位:填补 bass/hook 空隙
 BRASS_VEL = (80, 88, 78, 88)
 
-# Hook(规划 §3):每小节 8 × 8 分;重音位 0.5/2.0/3.5(互锁表)
-HOOK = {
-    'Em': (76, 78, 79, 78, 79, 78, 76, 78),
-    'C':  (72, 76, 77, 79, 77, 76, 72, 76),
-    'G':  (71, 74, 76, 79, 76, 74, 71, 74),
-    'D':  (69, 71, 74, 78, 74, 71, 74, 71),   # 索引6 原 69(A4)与 M2 58 大七度,改 74
+# Hook 稀疏点缀表(v7.1 用户决策:合成器 = 总旋律的辅助,重心在贝斯)
+# 每和弦 4 槽音高(0.5 / 2.0 / 2.5 / 3.5 拍),E 小调五声高区,全部与长音/刺刀 ≥2 半音
+# 小节用法:bar1(0.5,3.5) bar2(0.5,2.5) bar3(0.5,2.0,3.5) bar4(0.5,3.5)
+HOOK_DOT = {
+    'Em': (79, 78, 76, 76),   # A5 G5 E5 E5
+    'C':  (79, 76, 72, 72),   # G5 E5 C5 C5
+    'G':  (79, 76, 74, 74),   # G5 E5 D5 D5
+    'D':  (78, 74, 71, 71),   # F#5 D5 B4 B4
 }
-HOOK_VAR = (71, 74, 76, 79, 81, 79, 76, 74)   # 轮3 bar3 变奏(A5 经过音)
+HOOK_DOT_VEL = (72, 72, 66, 72)   # 辅助层力度(不越互锁阈值);rel 15 再 -8
 
 # 节奏层切分和弦(57-64 带;v7 和谐修正:M2 降至 57/58 后,各小节避开其±1)
 RHY_CHORD = {
@@ -121,26 +123,22 @@ def build(s, bar0, cycle, ch):
         for j, p in enumerate(RISER[cname]):
             s.note('fx', p, RISER_VEL[j], beat(rel, 2.0 + j * 0.25), 0.22)
 
-    # ---------------- hook 对话链(4 轮) ----------------
-    HOOK_MAIN = (82, 94, 82, 82, 94, 82, 72, 94)     # 重音 0.5/2.0/3.5;索引6(3.0)降 72——
-    #                                                 与 M3/bass 重音同槽,+BOOST/humanize 后 <84 不越互锁阈值
-    HOOK_TAIL = (76, 88, 76, 76, 88, 76, 76, 88)     # rel 15 减力(回环)
+    # ---------------- hook 稀疏点缀(辅助层;重心在 bass) ----------------
     for rel in range(16):
         cname = CHORDS16[rel]
+        d0, d1, d2, d3 = HOOK_DOT[cname]
         k = rel % 4
         if k == 1:
-            # bar2:缩刺点(让位 brass 插入 + bass 高把位应答)
-            s.note('hook', HOOK[cname][0], 70 + VOICE_BOOST, beat(rel, 0.5), 0.3)
-            s.note('hook', HOOK[cname][2], 70 + VOICE_BOOST, beat(rel, 2.5), 0.3)
+            slots = ((0.5, d0, 0), (2.5, d2, 2))            # bar2:两音(让位刺刀/应答)
+        elif k == 3:
+            slots = ((0.5, d0, 0), (3.5, d3, 3))            # bar4:首尾(rel15 减力回环)
         else:
-            hook = list(HOOK[cname])
-            if rel == 4:                                # 轮2 bar1:尾 2 音降 8 度微变
-                hook[6], hook[7] = 64, 67
-            elif rel == 10:                             # 轮3 bar3:变奏(A5 经过音)
-                hook = list(HOOK_VAR)
-            ramp = HOOK_TAIL if rel == 15 else HOOK_MAIN
-            for i, p in enumerate(hook):
-                s.note('hook', p, ramp[i] + VOICE_BOOST, beat(rel, i * 0.5), 0.4)
+            slots = ((0.5, d0, 0), (2.0, d1, 1), (3.5, d3, 3))   # bar1/3:三音小句
+        for b, p, slot in slots:
+            v = HOOK_DOT_VEL[slot] + VOICE_BOOST
+            if rel == 15:
+                v -= 8
+            s.note('hook', p, v, beat(rel, b), 0.3)
 
     return bar0 + 16
 
