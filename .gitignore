@@ -62,3 +62,5 @@ compositions/infinity_reverse/plots/
 compositions/contrapunctus_abyssi/stems/
 # combat_extraction: stems 中间产物不入库
 compositions/combat_extraction/stems/
+# combat_extraction: dist 构建交付物不入库(可 ./build_all.sh 或 export_stems.py 生成)
+compositions/combat_extraction/dist/

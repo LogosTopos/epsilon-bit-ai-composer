@@ -1,0 +1,96 @@
+{
+  "lead_model": {
+    "global": [
+      "pulse12.5",
+      0.6820831707694297,
+      21.0
+    ],
+    "notes_used": 24,
+    "per_note": [
+      [
+        "pulse12.5",
+        8
+      ],
+      [
+        "square50",
+        7
+      ],
+      [
+        "triangle",
+        5
+      ],
+      [
+        "pulse25",
+        3
+      ],
+      [
+        "saw",
+        1
+      ]
+    ]
+  },
+  "bass_model": {
+    "global": [
+      "saw",
+      0.30668528031960857,
+      24.0
+    ],
+    "notes_used": 35,
+    "per_note": [
+      [
+        "square50",
+        14
+      ],
+      [
+        "saw",
+        11
+      ],
+      [
+        "triangle",
+        8
+      ],
+      [
+        "pulse25",
+        2
+      ]
+    ]
+  },
+  "vibrato": {
+    "n": 18,
+    "rate_median": 12.053000710227273,
+    "depth_median": 1.3692171709528116
+  },
+  "envelope": {
+    "attack_median_ms": 4.603174603174603,
+    "decay20_median_ms": 1.7233560090702948
+  },
+  "drums": {
+    "n_events": 1689,
+    "classes": {
+      "hat": 628,
+      "crash": 675,
+      "snare": 331,
+      "other": 55
+    }
+  },
+  "drum_spectra": {
+    "snare": {
+      "centroid_hz": 2170.9512936255105
+    },
+    "hat": {
+      "centroid_hz": 6589.300318201203
+    },
+    "crash": {
+      "centroid_hz": 5429.155987270911
+    }
+  },
+  "reverb": {
+    "snare_tail_to_minus20db_s": 0.012562358276643992
+  },
+  "stereo_side_mid": {
+    "low": 0.1362234411677536,
+    "mid": 0.4679649926430863,
+    "high": 0.47924394027283274,
+    "veryhigh": 0.6045586091673597
+  }
+}

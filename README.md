@@ -47,7 +47,6 @@ curl -L -o soundfonts/MuseScore_General.sf2 \
 
 ```
 ├── compositions/          # 作品(每曲一目录:脚本+MIDI+WAV+MP3+说明)
-│   └── infinity_reverse/   # 《Infinity》逆向分析(见该目录 README)
 ├── scripts/
 │   └── verify_render.py   # 渲染链路验证工具
 ├── soundfonts/            # 音色库(大文件,不入库,按上文下载)
@@ -56,6 +55,7 @@ curl -L -o soundfonts/MuseScore_General.sf2 \
 │   └── REVISION_HISTORY.md # 《深渊之战》逐轮打磨记录(6 轮修订,含技术规则沉淀)
 └── archive/
     ├── legacy-8bit/       # 旧 8-bit 工作台实验(已归档,仅本地保留)
+    ├── infinity_reverse/  # 《Infinity》逆向分析实验(已归档,音频已删除)
     ├── fm-renders/        # 旧 FM 测试音色库渲染产物(教训参考)
     └── references/        # 过程参考资料(参考截图/OCR)
 ```

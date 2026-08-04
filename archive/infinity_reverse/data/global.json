@@ -1,0 +1,48 @@
+{
+  "duration_s": 258.378,
+  "tempo_beat_track": 172.27,
+  "tempo_onset": 172.27,
+  "tempo_tempogram_peak": 172.27,
+  "n_beats": 742,
+  "keys": [
+    [
+      "F\u266f minor",
+      0.744
+    ],
+    [
+      "F\u266f major",
+      0.665
+    ],
+    [
+      "A minor",
+      0.34
+    ],
+    [
+      "B major",
+      0.331
+    ],
+    [
+      "C\u266f major",
+      0.327
+    ],
+    [
+      "A\u266f major",
+      0.215
+    ]
+  ],
+  "segment_times": [
+    0.104,
+    46.777,
+    66.63,
+    114.695,
+    134.548,
+    207.691,
+    227.544,
+    252.97
+  ],
+  "rms_median": 0.26746055483818054,
+  "rms_p95": 0.43840596079826355,
+  "centroid_median_hz": 4307.43428813223,
+  "rolloff95_median_hz": 15094.775390625,
+  "frac_energy_15_20k": 0.06458263099193573
+}

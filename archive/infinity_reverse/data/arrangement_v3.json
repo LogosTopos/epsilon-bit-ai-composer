@@ -1,0 +1,303 @@
+{
+  "sections": [
+    {
+      "name": "intro",
+      "bars": [
+        0.0,
+        8.0
+      ],
+      "t": [
+        0.0,
+        11.15
+      ],
+      "density": {
+        "bass": false,
+        "drums": "none",
+        "arp": "orig",
+        "counter": false,
+        "pad": true,
+        "lead": "motif",
+        "gain": 0.55
+      }
+    },
+    {
+      "name": "build",
+      "bars": [
+        8.0,
+        16.0
+      ],
+      "t": [
+        11.15,
+        22.29
+      ],
+      "density": {
+        "bass": true,
+        "drums": "build",
+        "arp": "orig",
+        "counter": false,
+        "pad": true,
+        "lead": "all",
+        "gain": 0.75
+      }
+    },
+    {
+      "name": "a1",
+      "bars": [
+        16.0,
+        33.6
+      ],
+      "t": [
+        22.29,
+        46.81
+      ],
+      "density": {
+        "bass": true,
+        "drums": "full",
+        "arp": "gen",
+        "counter": true,
+        "pad": true,
+        "lead": "all",
+        "gain": 0.95
+      }
+    },
+    {
+      "name": "turn1",
+      "bars": [
+        33.6,
+        47.8
+      ],
+      "t": [
+        46.81,
+        66.59
+      ],
+      "density": {
+        "bass": true,
+        "drums": "half",
+        "arp": "orig",
+        "counter": false,
+        "pad": true,
+        "lead": "all",
+        "gain": 0.7
+      }
+    },
+    {
+      "name": "a2",
+      "bars": [
+        47.8,
+        82.3
+      ],
+      "t": [
+        66.59,
+        114.66
+      ],
+      "density": {
+        "bass": true,
+        "drums": "full",
+        "arp": "gen",
+        "counter": true,
+        "pad": true,
+        "lead": "all",
+        "gain": 1.0
+      }
+    },
+    {
+      "name": "turn2",
+      "bars": [
+        82.3,
+        96.6
+      ],
+      "t": [
+        114.66,
+        134.58
+      ],
+      "density": {
+        "bass": true,
+        "drums": "half",
+        "arp": "orig",
+        "counter": false,
+        "pad": true,
+        "lead": "all",
+        "gain": 0.7
+      }
+    },
+    {
+      "name": "b",
+      "bars": [
+        96.6,
+        122.8
+      ],
+      "t": [
+        134.58,
+        171.08
+      ],
+      "density": {
+        "bass": true,
+        "drums": "full",
+        "arp": "gen",
+        "counter": true,
+        "pad": true,
+        "lead": "all",
+        "gain": 0.92,
+        "chords": "bm_cycle"
+      }
+    },
+    {
+      "name": "climax",
+      "bars": [
+        122.8,
+        137.4
+      ],
+      "t": [
+        171.08,
+        191.43
+      ],
+      "density": {
+        "bass": true,
+        "drums": "climax",
+        "arp": "gen",
+        "counter": true,
+        "pad": true,
+        "lead": "all",
+        "gain": 1.1,
+        "chords": "climax"
+      }
+    },
+    {
+      "name": "break",
+      "bars": [
+        137.4,
+        145.5
+      ],
+      "t": [
+        191.43,
+        202.71
+      ],
+      "density": {
+        "bass": false,
+        "drums": "none",
+        "arp": "orig",
+        "counter": false,
+        "pad": true,
+        "lead": "all",
+        "gain": 0.5,
+        "chords": "pedal"
+      }
+    },
+    {
+      "name": "reprise",
+      "bars": [
+        145.5,
+        149.1
+      ],
+      "t": [
+        202.71,
+        207.73
+      ],
+      "density": {
+        "bass": true,
+        "drums": "half",
+        "arp": "orig",
+        "counter": false,
+        "pad": true,
+        "lead": "all",
+        "gain": 0.8
+      }
+    },
+    {
+      "name": "turn3",
+      "bars": [
+        149.1,
+        163.3
+      ],
+      "t": [
+        207.73,
+        227.51
+      ],
+      "density": {
+        "bass": true,
+        "drums": "half",
+        "arp": "orig",
+        "counter": false,
+        "pad": true,
+        "lead": "all",
+        "gain": 0.72
+      }
+    },
+    {
+      "name": "finale",
+      "bars": [
+        163.3,
+        181.6
+      ],
+      "t": [
+        227.51,
+        253.01
+      ],
+      "density": {
+        "bass": true,
+        "drums": "full",
+        "arp": "gen",
+        "counter": true,
+        "pad": true,
+        "lead": "octave",
+        "gain": 1.15
+      }
+    },
+    {
+      "name": "outro",
+      "bars": [
+        181.6,
+        185.5
+      ],
+      "t": [
+        253.01,
+        258.44
+      ],
+      "density": {
+        "bass": true,
+        "drums": "half",
+        "arp": "orig",
+        "counter": false,
+        "pad": true,
+        "lead": "all",
+        "gain": "fade"
+      }
+    }
+  ],
+  "note_counts": {
+    "lead": 375,
+    "counter": 209,
+    "bass": 680,
+    "arp": 2051,
+    "pads": 555
+  },
+  "gains": {
+    "lead": 0.9,
+    "counter": 0.5,
+    "bass": 1.2,
+    "arp": 0.35,
+    "pad": 0.5,
+    "padB": 0.3,
+    "drums": 0.7
+  },
+  "section_rms": {
+    "intro": 0.1302,
+    "build": 0.1696,
+    "a1": 0.222,
+    "turn1": 0.1634,
+    "a2": 0.2442,
+    "turn2": 0.1658,
+    "b": 0.217,
+    "climax": 0.2787,
+    "break": 0.1122,
+    "reprise": 0.1756,
+    "turn3": 0.1705,
+    "finale": 0.2941,
+    "outro": 0.1126
+  },
+  "band_rms": {
+    "low": 0.0436,
+    "mid": 0.1162,
+    "high": 0.0262
+  }
+}
