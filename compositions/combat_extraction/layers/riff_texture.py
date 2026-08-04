@@ -95,18 +95,22 @@ def build(s, bar0, cycle, ch):
         s.chord('synth_pad', CHOIR_VOICE[cname], 42, beat(rel, 0.0), dur)
         s.chord('choir', CHOIR_VOICE[cname], 50, beat(rel, 0.0), dur)
 
-    # ---------------- brass M2 全程 + M3(rel 3/7/11 @3.0) ----------------
+    # ---------------- brass M2 全程(轮次力度波 80→84→88→84,防机械)+ M3(rel 3/7/11 @3.0) ----------------
+    BRASS_WAVE = ((80, 88, 78, 88), (84, 92, 82, 92), (88, 96, 86, 96), (84, 92, 82, 92))
     for rel in range(16):
         cell = M2[rel % 2]
+        bvel = BRASS_WAVE[rel // 4]
         for i, b in enumerate(M2_SLOTS):
-            s.note('brass_stab', cell[i], BRASS_VEL[i], beat(rel, b), 0.35)
+            s.note('brass_stab', cell[i], bvel[i], beat(rel, b), 0.35)
     for rel in (3, 7, 11):
         s.note('brass_stab', 57, 96, beat(rel, 3.0), 0.3)   # M3 齐奏(与 timpani/kick/bass)
 
-    # ---------------- rhythm 节奏层全程 ----------------
+    # ---------------- rhythm 节奏层全程(轮 2/4 切分整体后移 0.25,防机械) ----------------
+    RHY_SLOTS2 = (0.5, 1.25, 2.25, 3.25)
     for rel in range(16):
         cname = CHORDS16[rel]
-        for b in RHY_SLOTS:
+        slots = RHY_SLOTS2 if (rel // 4) % 2 == 1 else RHY_SLOTS
+        for b in slots:
             s.chord('synth_rhythm', RHY_CHORD[cname], 70, beat(rel, b), 0.25)
 
     # ---------------- piano 0.0 锚点重击(全程) ----------------
@@ -115,18 +119,20 @@ def build(s, bar0, cycle, ch):
         s.note('piano_bang', r0, 64, beat(rel, 0.0), 0.3)
         s.note('piano_bang', r0 + 12, 64, beat(rel, 0.0), 0.3)
 
-    # ---------------- fx:每小节 0.0 低脉冲(57,电子心跳)+ 轮末 riser ----------------
+    # ---------------- fx:每小节 0.0 低脉冲(轮 3/4 升 59,电子心跳微变)+ 轮末 riser ----------------
     for rel in range(16):
-        s.note('fx', 57, 42, beat(rel, 0.0), 0.22)
+        s.note('fx', 59 if rel >= 8 else 57, 42, beat(rel, 0.0), 0.22)
     for rel in (3, 7, 11):
         cname = CHORDS16[rel]
         for j, p in enumerate(RISER[cname]):
             s.note('fx', p, RISER_VEL[j], beat(rel, 2.0 + j * 0.25), 0.22)
 
-    # ---------------- hook 稀疏点缀(辅助层;重心在 bass) ----------------
+    # ---------------- hook 稀疏点缀(辅助层;轮 2/4 的 0.5 槽上挑 +2 音,防机械) ----------------
     for rel in range(16):
         cname = CHORDS16[rel]
         d0, d1, d2, d3 = HOOK_DOT[cname]
+        if (rel // 4) % 2 == 1:                       # 轮 2/4:句头上挑
+            d0 = {'Em': 81, 'C': 81, 'G': 81, 'D': 76}[cname]
         k = rel % 4
         if k == 1:
             slots = ((0.5, d0, 0), (2.5, d2, 2))            # bar2:两音(让位刺刀/应答)

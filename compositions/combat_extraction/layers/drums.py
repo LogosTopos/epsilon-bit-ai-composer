@@ -41,18 +41,25 @@ def build(s, bar0, cycle, ch):
     for i, ccv in enumerate(CC11_TIER):
         s.cc('drums', 11, ccv, B(i * 4, 0.0))
 
-    # ---------- 全程骨架:kick 8分(3+3+2 重音)+ snare 2/4 + hat 16分 ----------
+    # ---------- 全程骨架:kick 8分(3+3+2 重音;bar3 移位 3+2+3)+ snare 2/4 + hat 16分 ----------
     for i in range(16):
+        shift = (i % 4 == 2)                     # 每轮 bar3:重音移位(句法转)
         for j in range(8):
             b = j * 0.5
             if i == 15 and b == 3.0:
                 continue                          # m18 第 4 拍无重音(回环)
-            vel = 104 + dk if b in (0.0, 1.5, 3.0) else 92 + dk
+            if shift and b == 3.0:
+                vel = 92 + dk                     # 移位小节:3.0 降普通(3+2+3)
+            else:
+                acc = (0.0, 1.5, 2.5) if shift else (0.0, 1.5, 3.0)
+                vel = 104 + dk if b in acc else 92 + dk
             s.note('drums', 36, vel, B(i, b), 0.2)
         for b in ((1.0,) if i in (7, 11) else (1.0, 3.0)):   # rel 7/11 的 3.0 背拍让位 fill
             s.note('drums', 38, 98 + dk, B(i, b), 0.2)
         for j in range(16):
             s.note('drums', 42, 72, B(i, j * 0.25), 0.15)
+        if shift:
+            s.note('drums', 44, 74, B(i, 2.75), 0.15)   # 开镲(bar3,鼓手的呼吸)
 
     # ---------- 幽灵音:每轮 bar1-3(bar4 让位 fill/M3/riser) ----------
     for i in (0, 1, 2, 4, 5, 6, 8, 9, 10, 12, 13, 14):
@@ -63,7 +70,9 @@ def build(s, bar0, cycle, ch):
     for i in (0, 4, 8, 12):
         s.note('drums', 49, 96, B(i, 0.0), 1.0)
 
-    # ---------- fill:rel 7/11 末(轮 2/3 收束,推进下一轮) ----------
+    # ---------- fill:rel 3 小 fill(2 音收束)+ rel 7/11 大 fill(轮 2/3 收束) ----------
+    for b, v in ((3.5, 96), (3.75, 88)):
+        s.note('drums', 38, v, B(3, b), 0.2)     # 轮1 bar4 末小 fill
     if cycle == 0:
         for rel in (7, 11):
             for j in range(8):                       # 16 分 8 音(2.0-3.75)
@@ -77,7 +86,10 @@ def build(s, bar0, cycle, ch):
 
     # ---------- timpani:全程 2.0 根音重击 + M3 齐击(rel 3/7/11) ----------
     for i in range(16):
-        s.note('timpani', TIMP_ROOT[CHORDS16[i]], TIMP_VEL[i // 4], B(i, 2.0), 0.4)
+        d = 0.2 if i >= 12 else 0.4              # 轮4 双音滚:主音缩短让位第二音
+        s.note('timpani', TIMP_ROOT[CHORDS16[i]], TIMP_VEL[i // 4], B(i, 2.0), d)
+        if i >= 12:                              # 轮4:双音滚(收束前密化)
+            s.note('timpani', TIMP_ROOT[CHORDS16[i]], TIMP_VEL[i // 4] - 12, B(i, 2.25), 0.25)
     for rel in (3, 7, 11):
         s.note('timpani', 38, 78, B(rel, 3.0), 0.4)   # M3:D2 与 brass/kick/bass 齐奏
     # rel 15(m18)无 M3 —— 回环工程:m18 第 4 拍无重音

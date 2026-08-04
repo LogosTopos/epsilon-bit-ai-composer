@@ -82,17 +82,18 @@ def build(s, bar0, cycle, ch):
     def bt(bar):
         return (bar - 1) * 4
 
-    def riff_dense(bar, mode, prog, vel, answer=False):
-        """16 分密集驱动(模式渐进);3+3+2 重音(0/1.5/3.0,互锁表);
-        answer:末 4 音换高把位应答(对话链)"""
+    def riff_dense(bar, mode, prog, vel, answer=False, shift=False):
+        """16 分密集驱动(模式渐进);重音 3+3+2(0/1.5/3.0)或移位 3+2+3(0/1.25/2.75);
+        answer:末 4 音换高把位应答(对话链);shift:每轮 bar3 重音移位(句法转)"""
         pat = BASS_MODES[mode][prog]
+        acc = (0, 6, 10) if shift else (0, 6, 12)   # 3+2+3:0/1.5/2.5(间隔 3,2,3 个 8 分)
         if answer:
             pat = pat[:12] + BASS_ANSWER[prog]
         for i, p in enumerate(pat):
             if answer and i >= 12:
                 v = ANSWER_VEL[i - 12]
             else:
-                v = vel + (10 if i in (0, 6, 12) else 0)
+                v = vel + (10 if i in acc else 0)
             s.note(B, p, v, bt(bar) + i * 0.25, 0.24)
 
     def strchord(bar, prog, vel, dur):
@@ -109,8 +110,11 @@ def build(s, bar0, cycle, ch):
             s.cc(name, 11, ccv, bt(bar0 + i * 4))
 
     # 全程:bass dense(模式渐进)+ 弦乐长音(rel 3/7/11 缩 2.0 让位 riser);rel 15 单独处理(回环)
+    # 句法:每轮 bar3 重音移位 3+2+3(转),bar4 回归 3+3+2 收束;cycle1 模式轮次错位(防两圈机械)
+    plan = BASS_PLAN if cycle == 0 else (1, 1, 1, 1, 2, 2, 2, 2, 0, 0, 0, 0, 1, 1, 1, 1)
     for i in range(15):
-        riff_dense(bar0 + i, BASS_PLAN[i], CHORDS16[i], BASS_VEL, answer=(i % 4 == 1))   # 每轮 bar2:应答
+        riff_dense(bar0 + i, plan[i], CHORDS16[i], BASS_VEL,
+                   answer=(i % 4 == 1), shift=(i % 4 == 2))   # 每轮 bar2 应答 / bar3 移位
         dur = 2.0 if i in (3, 7, 11) else 3.9
         strchord(bar0 + i, CHORDS16[i], STR_VEL, dur)
     strchord(bar0 + 15, 'Em', STR_VEL, 3.9)
