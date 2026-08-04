@@ -36,7 +36,7 @@ CHAIN = {
     # bass:中低频峰提升(110Hz +3dB,音高可辨)+ 音量 1.65(主角)
     'bass':       'highpass=f=30,equalizer=f=110:t=q:w=1:g=3,volume=1.65',
     'strings':    'highpass=f=60,volume=0.75',
-    'stab':       'acompressor=threshold=-22dB:ratio=2:attack=10:release=150,volume=1.15',
+    'stab':       'acompressor=threshold=-26dB:ratio=2:attack=10:release=150,volume=0.95',  # v9:更柔,完全辅助
     'atmosphere': 'volume=0.7',
 }
 

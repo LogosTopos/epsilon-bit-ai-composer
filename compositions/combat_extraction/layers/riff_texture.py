@@ -7,9 +7,16 @@ synth_rhythm(切分节奏层)、fx(riser+低脉冲)。
 - hook 对话链:bar1 全 riff → bar2 缩刺点(让位 brass 插入+bass 应答)→
   bar3 全 riff(轮3 变奏)→ bar4 全 riff(轮4 末减力回环)
 - 轮次微变:轮2 bar1 尾 2 音降 8 度;轮3 bar3 变奏(A5 经过音);轮4 bar4 减力
-- brass M2 全程(0.75/1.25/2.75/3.25 互锁位)+ M3 rel 3/7/11 @3.0
 - fx:rel 3/7/11 轮末 riser(五声上行 6 音,弦乐/pad/choir 让位 2.0)+ 每小节 0.0 低脉冲
 CC11:轮起点 80/82/84/82(微弧)
+
+v9 完全辅助化(用户决策,2026-08):stab 组 = 色彩点缀/推进,不再承担第二旋律面。
+- ⚠️ 红线:stab 组含 humanize 峰值 hook ≤ 84、其余角色 ≤ 78;禁单角色每小节 > 4 音(audit 第 5 维验收)
+- brass 密度 2/4/3/2 → 1/2/2/0(bar4 让位 M3/riser),vel 76-96 → 62-76,轮次力度波删除
+- M3 齐奏 brass 96 → 76(冲击交给 timpani/kick/bass 三件套)
+- rhythm 全程 4 落点 → 只轮 2/4 出场、每小节 2 落点(0.25/2.0 反拍),vel 70 → 58
+- riser 50-86 → 42-72(尾音不越互锁阈值 84)
+- hook 保持(v7.1 决策:唯一旋律辅助,vel 66-76)
 """
 import sys, os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -49,7 +56,6 @@ HOOK_HIGH = {'Em': 81, 'C': 77, 'G': 79, 'D': 78}   # 轮2/4 句头高音(五声
 HOOK_LONG_VEL = 76    # 长音(喘息点),+BOOST 后 <84 不越互锁阈值
 HOOK_SHORT_VEL = 66
 
-# 节奏层切分和弦(57-64 带;v7 和谐修正:M2 降至 57/58 后,各小节避开其±1)
 # 节奏层切分和弦(57-64 带;v8 修正:C 小节原 (62,64) = 大七度(尖锐),改纯五度 (60,67))
 RHY_CHORD = {
     'Em': (55, 64),   # G3 E4(六度)
@@ -57,7 +63,6 @@ RHY_CHORD = {
     'G':  (55, 62),   # G3 D4(纯五度)
     'D':  (50, 62),   # D3 D4(八度)
 }
-RHY_SLOTS = (0.25, 1.0, 2.0, 3.0)   # 反拍 + 背拍区(错开 bass 0/1.5/3.0)
 
 # 合唱/合成垫长音和弦(3 音;v7 和谐修正:Em/G/D 避开与 M2 的摩擦)
 CHOIR_VOICE = {
@@ -75,7 +80,7 @@ RISER = {
     'Em': (64, 67, 69, 71, 74, 76),
     'D':  (62, 66, 69, 71, 74, 78),
 }
-RISER_VEL = (50, 58, 66, 74, 80, 86)   # 3.0 槽 80(humanize ±2 后 <84,不越互锁阈值)
+RISER_VEL = (42, 48, 54, 60, 66, 72)   # v9:全组 <78,推进感靠音符走向而非音量
 
 CC11_TIER = (80, 82, 84, 82)   # 轮起点 CC11 微弧
 
@@ -106,30 +111,29 @@ def build(s, bar0, cycle, ch):
         s.chord('synth_pad', CHOIR_VOICE[cname], 42, beat(rel, 0.0), dur)
         s.chord('choir', CHOIR_VOICE[cname], 50, beat(rel, 0.0), dur)
 
-    # ---------------- brass 刺刀乐句(v8.2:密度 2/4/3/2 松紧 + 轮次力度波,不再门铃) ----------------
-    # 每轮:bar1 两音动机头 → bar2 满 4 音(推进)→ bar3 三音(展开)→ bar4 两音收(让位 M3/riser)
-    STAB_SLOTS = ((0.75, 1.25), (0.75, 1.25, 2.75, 3.25), (0.75, 1.25, 2.75), (0.75, 1.25))
-    STAB_BASE = ((76, 84), (80, 88, 78, 88), (80, 88, 78), (76, 84))
-    STAB_OFF = (0, 4, 8, 4)                    # 轮次力度波
+    # ---------------- brass 刺刀乐句(v9:完全辅助化——密度 1/2/2/0,vel 62-76,不再承担第二旋律面) ----------------
+    # 每轮:bar1 动机头 1 音 → bar2 刺刀插入 2 音(对话链保留,轻点)→
+    #       bar3 2 音(呼应)→ bar4 0 音(让位 M3/riser)。全组 < 互锁阈值 84。
+    STAB_SLOTS = ((0.75,), (0.75, 1.25), (0.75, 1.25), ())
+    STAB_VEL = ((66,), (70, 76), (70, 76), ())
     for rel in range(16):
         cname = CHORDS16[rel]
         cell = M2[cname]
-        off = STAB_OFF[rel // 4]
         for i, b in enumerate(STAB_SLOTS[rel % 4]):
-            s.note('brass_stab', cell[i], STAB_BASE[rel % 4][i] + off, beat(rel, b), 0.35)
+            s.note('brass_stab', cell[i], STAB_VEL[rel % 4][i], beat(rel, b), 0.35)
     for rel in (3, 7, 11):
-        s.note('brass_stab', M3_PITCH[CHORDS16[rel]], 96, beat(rel, 3.0), 0.3)   # M3 齐奏(与 timpani/kick/bass)
+        s.note('brass_stab', M3_PITCH[CHORDS16[rel]], 76, beat(rel, 3.0), 0.3)   # M3 齐奏降力(76+humanize±2=78,冲击交给 timpani/kick/bass)
 
-    # ---------------- rhythm 节奏层全程(轮 2/4 切分后移 0.25;bar4 减为 2 落点让位 M3/riser) ----------------
-    RHY_SLOTS2 = (0.5, 1.25, 2.25, 3.25)
+    # ---------------- rhythm 节奏层(v9:完全辅助化——只轮 2/4 出场、每小节 2 落点反拍;bar4 让位 M3/riser) ----------------
+    # 每圈 6 小节 × 2 落点 × 2 音 = 24 音(原 112),vel 70 → 58(与 strings 同档垫底)
     for rel in range(16):
-        cname = CHORDS16[rel]
+        if rel // 4 not in (1, 3):
+            continue                         # 只轮 2/4 出场(轮 1/3 空窗,中频清空)
         if rel % 4 == 3:
-            slots = (0.25, 2.0)
-        else:
-            slots = RHY_SLOTS2 if (rel // 4) % 2 == 1 else RHY_SLOTS
-        for b in slots:
-            s.chord('synth_rhythm', RHY_CHORD[cname], 70, beat(rel, b), 0.25)
+            continue                         # bar4 让位 M3/riser
+        cname = CHORDS16[rel]
+        for b in (0.25, 2.0):
+            s.chord('synth_rhythm', RHY_CHORD[cname], 58, beat(rel, b), 0.25)
 
     # ---------------- piano 0.0 锚点重击(全程) ----------------
     for rel in range(16):

@@ -8,16 +8,16 @@
 
 ## 0. 一句话现状
 
-**母节 v8.2(合成器版)已通过用户验收("够上及格线");子节 1《低音入场版》已完成。**
+**母节 v9(stab 完全辅助化)已产出,待用户试听验收;子节 1《低音入场版》已完成。**
 下一步:转场元素库 + S2~S6 子节 + 连播 demo。
 
 ## 1. 当前成品(文件)
 
 | 文件 | 说明 |
 |---|---|
-| `Combat_Extraction.mid/.mp3` | **主成品 = 母节 v8.2 合成器版**(Hook = 方波 0/80) |
-| `Combat_Extraction_v8_trumpet.mid/.mp3` | 小号版(对比保留,用户听感:合成器 > 小号) |
-| `Combat_Extraction_v7_*.mid/.mp3` | v7 历史版本(可删除) |
+| `Combat_Extraction.mid/.mp3` | **主成品 = 母节 v9 合成器版**(Hook = 方波 0/80,stab 完全辅助化) |
+| `Combat_Extraction_v9_trumpet.mid/.mp3` | 小号版(对比保留,用户听感:合成器 > 小号) |
+| `Combat_Extraction_v8_*.mid/.mp3` `v7_*` | 历史版本(可删除) |
 | `S1_Scavenge.mid/.mp3` | **子节 1《低音入场版》**(搜刮/开场氛围) |
 | `stems/stem_*.wav` | 5 组 stems 混音缓存(改层后必须删了重渲染) |
 
@@ -29,8 +29,10 @@
   → M3 齐奏收束 → riser 推进;轮次微变防机械(重音移位/力度波/开镲/切分位移)
 - **重心在 Bass**(用户决策):bass 是总旋律主角(16 分密集 + 4 轮模式渐进);
   合成器 hook 是**稀疏辅助**(每轮一句五声短句 + 0.8 拍长音喘息)
+- **stab 组完全辅助(v9)**:brass 刺刀 1/2/2/0 密度 vel 62-76、rhythm 只轮 2/4 反拍
+  2 落点 vel 58、riser 42-72、M3 brass 76——混音后与 strings/atmosphere 同档垫底
 - 和声 Em-C-G-D 循环(无终止式),168 BPM,4/4;母 loop = m3-18(22.9s),两圈演示
-- **14 层**:drums / bass / vln1(回声) / vln2 / vla / celli / hook(合成器) /
+- **14 层**(v9:rhythm 只轮 2/4 出场,轮 1/3 为 13 层):drums / bass / vln1(回声) / vln2 / vla / celli / hook(合成器) /
   brass_stab(刺刀+M3) / timpani / pad / choir / piano / synth_rhythm / fx
 
 ## 3. 音色表(当前,lib/progs.py)
@@ -68,6 +70,7 @@
 | **v8** | **刺刀重写:半音外音锯齿 → 和弦分解** | "stab 不和谐、旋律进展不符合预期"——避碰撞≠好听 |
 | v8.1 | 贝斯可听性大修(sidechain 温柔化 + 高把位化 + EQ) | "听不见贝斯手" |
 | v8.2 | stab 去碎片化:刺刀 2/4/3/2 密度 + hook 乐句化(长音喘息) | "太碎,门铃感,喘不上气;主旋律单拎怪" |
+| **v9** | **stab 完全辅助化:brass 1/2/2/0 + vel 62-76、rhythm 只轮 2/4 反拍、riser 42-72、M3 76;混音 0.95/-26dB** | 用户分析:v8 及格但 stab 层仍有缺陷,弱化为完全辅助角色 |
 | **S1** | 子节 1:删 stab + bass 平和化(8 分脉冲) | 用户指令 |
 | S1.1 | 去掉 bass bend 推弦 | "弹簧一样的音效" |
 
@@ -104,10 +107,11 @@ rm -f stems/stem_* && python3 mix_stems.py --mid in.mid --render-stems
 # 压码:峰值补 -1dB + libmp3lame -q:a 2 + ID3
 ```
 
-- **audit_v7.py**:四维审计(密度 14 层 / 互锁重音层 ≤2 / 碰撞 ≤150 / 占比)。
-  当前母节:0 冲突 / 14 层 / 0 违规 / **碰撞 0**。
+- **audit_v7.py**:五维审计(密度 ≥12 层,v9 口径 / 互锁重音层 ≤2 / 碰撞 ≤150 / 占比 /
+  **stab 辅助度**:每圈 ≤110 音、hook≤84、其余≤78)。当前母节:0 冲突 / 0 违规 / 碰撞 0 /
+  **stab 105 音/圈(216 减半)**,混音后 stab 占比 ≈ -35.9dB(与 strings/atmosphere 同档垫底)。
 - **混音链(mix_stems.py)**:drums 1.28 / bass 1.65+110Hz EQ+3dB / strings 0.75 /
-  stab 1.15 / atmosphere 0.7;bass sidechain **温柔化**(0.08/3/8ms)。
+  **stab 0.95+threshold -26dB(v9 更柔)** / atmosphere 0.7;bass sidechain **温柔化**(0.08/3/8ms)。
 - **音色陷阱**:双库渲染下 MuseScore Expr bank(17,x)会 fallback 到 GUGS 怪音色;
   用 GUGS 精确布局 (bank=prog, prog=0)——brass=(57,0),trumpet=(56,0)。
 - **强度弧线(高潮段口径)**:全曲平稳(轮间 ≤1.6dB),无档位落差;回环连续。
@@ -137,5 +141,6 @@ rm -f stems/stem_* && python3 mix_stems.py --mid in.mid --render-stems
 | v8 | 刺刀→和弦分解 | 3af40d4 |
 | v8.1 | 贝斯可听性大修 | 2bf909e |
 | v8.2 | stab 乐句化(去碎片) | 5e5e459 |
+| **v9** | **stab 完全辅助化(力度退让+密度减半+混音垫底)** | — |
 | S1 | 子节1 低音入场版 | 63d0b9d |
 | S1.1 | 去 bend 弹簧音效 | 851cd66 |

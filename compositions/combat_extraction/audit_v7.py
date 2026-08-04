@@ -9,6 +9,8 @@
   3. 碰撞:16 分网格上同时发音的音符对,音高差 ∈ {1,11}(小二度/大七度,≤2 八度)
      —— 验收:≤150 次
   4. 占比:各角色发声小节覆盖(闪现检测:亮点层应稳定出现)
+  5. stab 辅助度(v9):stab 组(ch 7/10/12/15)每圈音数 ≤ 110、
+     vel 峰值(含 humanize ±2)hook(ch10) ≤ 84 / 其余(ch7/12/15) ≤ 78 —— 完全辅助化验收
 用法:python3 audit_v7.py [--mid Combat_Extraction.mid] [--voice trumpet|synth]
 """
 import argparse
@@ -78,7 +80,24 @@ def audit(mid_path, label):
 
     print(f'\n===== {label} 审计 =====')
 
-    # 1. 密度(新口径:母节 = 高潮段,全 16 小节满配;两圈 m3-18 / m19-34)
+    # 0. stab 辅助度(先算,供其他维度引用)
+    STAB_CH = (7, 10, 12, 15)
+    stab_ok = True
+    stab_info = []
+    for (b0, b1) in ((8, 72), (72, 136)):      # 母 loop 两圈:m3-18 / m19-34
+        n = 0
+        mx = {7: 0, 10: 0, 12: 0, 15: 0}
+        for ch in STAB_CH:
+            evs = [e for e in by_ch.get(ch, []) if b0 <= e[0] < b1]
+            n += len(evs)
+            if evs:
+                mx[ch] = max(v for _, _, v, _ in evs)
+        ok = n <= 110 and mx[10] <= 84 and max(mx[7], mx[12], mx[15]) <= 78
+        stab_ok &= ok
+        stab_info.append((n, mx))
+
+    # 1. 密度(新口径:母节 = 高潮段;v9 修订——stab 弱化后 rhythm 只轮 2/4 出场,
+    #    轮 1/3 每小节 13 层、轮 2/4 满 14 层;验收 ≥12 层、avg ≥13)
     print('--- 密度(每小节活跃角色,验收:全 16 小节 14 层) ---')
     for (b0, b1) in ((3, 18), (19, 34)):
         per_bar = []
@@ -90,7 +109,7 @@ def audit(mid_path, label):
                     rb.add(ch)
             per_bar.append(len(rb))
         avg = sum(per_bar) / len(per_bar)
-        print(f'  圈 m{b0}-{b1}:每小节 {per_bar},avg {avg:.1f},min {min(per_bar)}(验收 ≥14)')
+        print(f'  圈 m{b0}-{b1}:每小节 {per_bar},avg {avg:.1f},min {min(per_bar)}(验收 ≥12,avg ≥13)')
     print()
 
     # 2. 互锁(音头语义:同槽'起音'的重音层 ≤2)
@@ -142,7 +161,19 @@ def audit(mid_path, label):
         bars = {int(on // 4) + 1 for (on, p, v, d) in by_ch[ch]}
         print(f'  ch{ch:2d} {role_names.get(ch, "?"):8s}: {len(bars):2d}/36 小节 ({100*len(bars)/36:.0f}%)')
 
-    return {'interlock_viol': viol, 'collisions': coll}
+    # 5. stab 辅助度(v9 验收,含 humanize ±2)
+    print('--- stab 辅助度(每圈音数 / vel 峰值,验收 ≤110 音、hook≤84、其余≤78) ---')
+    for (b0, b1), (n, mx) in zip(((8, 72), (72, 136)), stab_info):
+        extra = ''
+        if n > 110:
+            extra += f'  [超音数 {n}]'
+        if mx[10] > 84:
+            extra += f'  [hook 超 {mx[10]}]'
+        if max(mx[7], mx[12], mx[15]) > 78:
+            extra += f'  [fx/brass/rhythm 超 {max(mx[7], mx[12], mx[15])}]'
+        print(f'  圈 m{b0//4+1}-{b1//4}: {n} 音,vel 峰值 hook={mx[10]} brass={mx[12]} rhythm={mx[15]} fx={mx[7]}{extra}')
+
+    return {'interlock_viol': viol, 'collisions': coll, 'stab_ok': stab_ok}
 
 
 if __name__ == '__main__':
@@ -150,7 +181,7 @@ if __name__ == '__main__':
     ap.add_argument('--mid', default='Combat_Extraction.mid')
     ap.add_argument('--voice', default='trumpet', choices=('trumpet', 'synth'))
     args = ap.parse_args()
-    r = audit(args.mid, f'v7-{args.voice}')
-    ok = r['interlock_viol'] == 0 and r['collisions'] <= 150
-    print(f'\n验收:{"PASS" if ok else "FAIL"} (互锁违规 {r["interlock_viol"]},碰撞 {r["collisions"]})')
+    r = audit(args.mid, f'v9-{args.voice}')
+    ok = r['interlock_viol'] == 0 and r['collisions'] <= 150 and r['stab_ok']
+    print(f'\n验收:{"PASS" if ok else "FAIL"} (互锁违规 {r["interlock_viol"]},碰撞 {r["collisions"]},stab 辅助度 {"PASS" if r["stab_ok"] else "FAIL"})')
     sys.exit(0 if ok else 1)
