@@ -119,6 +119,9 @@ AudioServer.add_bus(); AudioServer.set_bus_name(AudioServer.bus_count-1, "SFX")
    重新开始/返回主菜单/退出按钮,鼠标恢复可见)——此前死亡后无任何界面;
    ② 确认波次无限刷新(敌数 = 5+wave 线性增长,玩家不死则永续);
    ③ 教程内死亡 → "按 R 重新开始教程"
+✅ v4(2026-08-05):横版 main_sideview.gd 补 BATTLE 音乐挂点
+   (MusicManager.set_section(BATTLE),与 main.gd 同构,此前横版战斗无音乐切换);
+   headless 180 帧验证:main/sideview 各 1 条退出收尾噪音,零脚本错误
 ⏳ 未做:热噪层(热量专用层);.app 重导出(当前 `Godot --path` 直跑)
 
 ### 4.6 先做哪个(建议顺序)

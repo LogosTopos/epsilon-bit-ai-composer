@@ -61,7 +61,8 @@
 | 连播 demo | Combat_Extraction_Playthrough.mid/.mp3 | 3:01 |
 | 转场库 | sections/transitions.py | 5 元素 + 矩阵 |
 | 渲染链路 v2 | build_all.sh / build.sh / mix_stems.py / encode_mp3.py / export_stems.py / audit_v7.py | 一键全量 24s |
-| 文档 | docs/STATUS.md(权威)/ ARCHITECTURE / THERMOCLINE_MUSIC_DESIGN / GAME_THERMOCLINE / BLINK_ARCHITECTURE / BLINK_MAC_PORT / BLINK_TUTORIAL | |
+| 文档 | docs/STATUS.md(权威)/ ARCHITECTURE / THERMOCLINE_MUSIC_DESIGN / BLINK_ARCHITECTURE / BLINK_MAC_PORT / BLINK_TUTORIAL |
+| 归档 | GAME_THERMOCLINE(集成规划,已被 BLINK_ARCHITECTURE 取代)/ COMPOSITION_PLAN / DIAGNOSIS_v6 / PLAN_v7 / ROADMAP → archive/combat_extraction/pre_status_docs/ | |
 
 ### 游戏侧工程(~/Projects/blink-recovered,非 git 仓库)
 - 还原工程 + 集成:MusicManager(autoload)、tutorial 场景、死亡界面、K 键、枪声修复
