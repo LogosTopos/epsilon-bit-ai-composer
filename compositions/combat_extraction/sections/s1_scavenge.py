@@ -64,7 +64,7 @@ def build(s, bar0, cycle, ch):
             s.note('drums', 42, 48, bt(bar0 + i) + j * 0.5, 0.15)
     s.note('drums', 49, 70, bt(bar0), 1.0)     # 起点 crash(轻)
 
-    # ---------------- bass:平和 8 分脉冲 + 句尾 bend + bar4 句号长音 ----------------
+    # ---------------- bass:平和 8 分脉冲 + bar4 句号长音(无 bend——用户反馈弹簧音效去掉) ----------------
     for i in range(16):
         prog = CHORDS16[i]
         for j, p in enumerate(BASS_CALM[prog]):
@@ -74,8 +74,6 @@ def build(s, bar0, cycle, ch):
             if i % 4 == 3 and j == 7:
                 dur = 0.95
             s.note(B, p, vel, bt(bar0 + i) + j * 0.5, dur)
-            if j == 7:
-                s.bend(B, 2, bt(bar0 + i) + j * 0.5, dur, 0.25)   # 句尾推弦 +2(手)
 
     # ---------------- 氛围层:strings/pad/choir 长音 + piano 轻锚点 + vln1 回声 ----------------
     VOICES = {
