@@ -23,6 +23,7 @@ stinger/游戏内教程/死亡界面/K 键触控板适配),仓库已推 GitHub(L
 | `Combat_Extraction.mid/.mp3` | **主成品 = 母节 v9 合成器版**(Hook = 方波 0/80,stab 完全辅助化) |
 | `Combat_Extraction_v9_trumpet.mid/.mp3` | 小号版(对比保留,用户听感:合成器 > 小号) |
 | `S1_Scavenge.mid/.mp3` | **子节 1《低音入场版》**(搜刮/开场氛围) |
+| `Combat_Extraction_Loop.mid/.mp3` | **无缝大循环成品(3:28,可单曲循环,首尾无缝)**——S1→S2→母节→S-BT→母节→S4→S5→S6→loop_return 回 S1;`build_loop.py --cycle N` 遍间轮转 |
 | `stems/stem_*.wav` | 5 组 stems 混音缓存(改层后必须删了重渲染) |
 
 ## 2. 音乐架构(定稿,勿改大方向)
@@ -137,7 +138,8 @@ rm -f stems/stem_* && python3 mix_stems.py --mid in.mid --render-stems
 
 ## 6. 下一步(路线,2026-08-05 更新)
 
-已完成(历史):转场元素库 ✅ / 子节 2~6 ✅ / 连播 demo ✅ / stems 交付 ✅(export_stems.py)。
+已完成(历史):转场元素库 ✅ / 子节 2~6 ✅ / 连播 demo ✅ / stems 交付 ✅(export_stems.py) /
+无缝大循环 ✅(build_loop.py,2026-08-05)。
 
 当前待办(优先级从高到低,详见仓库根 docs/HANDOVER.md §5):
 

@@ -32,12 +32,18 @@
   time_unfold(s, bar0, ch) ................... 1 小节 时间展开(时停→交火):32 分 snare
                                                滚奏渐强 2 拍(40→88)+ 密度骤回(kick/crash/
                                                snare 交火短语,落母节/交火段入口)
+  loop_return(s, bar0, ch) ................... 2 小节 循环预伏(无缝回环,S6→S1 专用):
+                                               小节 1 静息延续(弦乐/pad 恢复长音,CC11 回升);
+                                               小节 2 = S1 首小节逐字复刻(bass 8 分脉冲 +
+                                               kick/snare/hat/crash)——循环点两侧为两个
+                                               相同小节,接缝不可察觉
 
 衔接矩阵 TRANSITIONS:节点 'S1'..'S6'(S3 = 母节)+ 'S-BT'(时停),键 (from, to) →
-(元素名, 说明)。合法衔接(游戏流程内)11 条:6 正向 + 3 反向 + 2 时停
-(('S3','S-BT') → time_fold / ('S-BT','S3') → time_unfold);其余组合一律
-('not_recommended', '游戏流程外')。demo 连播(六子节)依据本矩阵插转场,
-见 sections/demo_playthrough.py。
+(元素名, 说明)。合法衔接(游戏流程内)14 条:6 正向 + 3 反向 + 2 时停 + 2 循环
+(('S6','S1') → loop_return 无缝回环 / ('S5','S1') → loop_return 冲刺直回)+ 1 冲刺
+(('S4','S5') → roll32);其余组合一律 ('not_recommended', '游戏流程外')。
+demo 连播(六子节)依据本矩阵插转场,见 sections/demo_playthrough.py;
+大循环成品见 sections/build_loop.py。
 
 冒烟测试:python3 sections/transitions.py → /tmp/smk_trans.mid
 (4 小节 S1 风格骨架 + 连续插入 riser/down_fx/roll32/crash_stop/harmony_prehang/
@@ -222,6 +228,57 @@ def harmony_prehang(s, bar0, ch, **kw):
     return bar0 + 1
 
 
+def loop_return(s, bar0, ch, **kw):
+    """2 小节:循环预伏(无缝回环,S6→S1 专用,2026-08-05 设计)。
+    原理:循环点两侧 = 两个相同小节(loop_return 末小节 ≡ S1 首小节逐字复刻),
+    和声 Em→Em 连续(全段共享骨架),能量从 S6 余烬经 1 小节静息回升到 S1 档。
+    小节 1(静息延续):弦乐/pad/choir Em 长音恢复(vel 34/28/32,承接 S6 余烬),
+    bass 根音轻留(28,vel 50);小节 2(S1 rel0 复刻):bass 8 分脉冲
+    (28,28,40,28,28,40,28,35,vel 82-96)+ kick 每拍 70 + snare 2/4 58 + hat 8 分 48
+    + crash 轻 70 + 弦乐长音 40 + pad/choir 30/36 + piano 锚 40/52 + vln1 回声。"""
+    for r in ('bass_electric', 'drums', 'celli', 'vla', 'vln2', 'vln1',
+              'synth_pad', 'choir', 'piano_bang'):
+        assert r in ch, f'loop_return: 通道映射缺少角色 {r}'
+    t0 = (bar0 - 1) * 4
+    # ---- 小节 1:静息延续(Em 长音恢复,CC11 回升 78-80)----
+    for r in ('bass_electric', 'celli', 'vla', 'vln2', 'vln1',
+              'synth_pad', 'choir', 'piano_bang', 'drums'):
+        s.cc(r, 11, 78, t0)
+    s.note('celli', 40, 34, t0, 3.9)
+    s.note('vla', 64, 34, t0, 3.9)
+    s.note('vln2', 64, 34, t0, 3.9)
+    s.note('vln1', 71, 34, t0, 3.9)
+    s.chord('synth_pad', (52, 55, 64), 28, t0, 3.9)
+    s.chord('choir', (52, 55, 64), 32, t0, 3.9)
+    s.note('bass_electric', 28, 50, t0, 2.0)     # 根音轻留(心跳隐现)
+    # ---- 小节 2:S1 rel0 逐字复刻(与 sections/s1_scavenge.py 首小节一致)----
+    t1 = t0 + 4
+    for r in ('bass_electric', 'celli', 'vla', 'vln2', 'vln1',
+              'synth_pad', 'choir', 'piano_bang', 'drums'):
+        s.cc(r, 11, 80, t1)
+    for b in (0.0, 1.0, 2.0, 3.0):
+        s.note('drums', 36, 70, t1 + b, 0.2)     # kick 每拍
+    for b in (1.0, 3.0):
+        s.note('drums', 38, 58, t1 + b, 0.2)     # snare 2/4
+    for j in range(8):
+        s.note('drums', 42, 48, t1 + j * 0.5, 0.15)   # hat 8 分
+    s.note('drums', 49, 70, t1, 1.0)             # crash 轻(起点)
+    for j, (p, v) in enumerate(zip((28, 28, 40, 28, 28, 40, 28, 35),
+                                   (82, 82, 88, 82, 82, 88, 82, 96))):
+        s.note('bass_electric', p, v, t1 + j * 0.5, 0.45)   # S1 bass 8 分脉冲
+    s.note('celli', 40, 40, t1, 3.9)
+    s.note('vla', 64, 40, t1, 3.9)
+    s.note('vln2', 64, 40, t1, 3.9)
+    s.note('vln1', 71, 40, t1, 3.9)
+    s.chord('synth_pad', (52, 55, 64), 30, t1, 3.9)
+    s.chord('choir', (52, 55, 64), 36, t1, 3.9)
+    s.note('piano_bang', 40, 40, t1, 0.3)
+    s.note('piano_bang', 52, 40, t1, 0.3)
+    s.note('vln1', 64, 40, t1 + 3.5, 0.2)        # S1 vln1 回声(Em 对)
+    s.note('vln1', 67, 40, t1 + 3.75, 0.2)
+    return bar0 + 2
+
+
 # ---------------------------------------------------------------------------
 # 衔接矩阵:(from, to) → (元素名, 说明);节点 'S1'..'S6'(S3 = 母节)
 # ---------------------------------------------------------------------------
@@ -229,15 +286,18 @@ def harmony_prehang(s, bar0, ch, **kw):
 _LEGAL = {
     ('S1', 'S2'): ('riser', '低→中升档'),
     ('S2', 'S3'): ('riser', '升档'),
-    ('S3', 'S4'): ('riser', '升档,S4 旋律层 +1 半音,riser 掩盖调性跳变'),
+    ('S3', 'S4'): ('riser', '升档,S4 v2 心率 kick 绝境(无移调)'),
     ('S4', 'S3'): ('down_fx', '降档回原位调'),
     ('S3', 'S5'): ('roll32', '冲刺,BPM 168→176 由 S5 build 内部处理'),
+    ('S4', 'S5'): ('roll32', '绝境→冲刺滚奏升档,BPM 168→176 由 S5 build 内部处理'),
     ('S5', 'S6'): ('crash_stop', '急停,BPM 176→168 由 crash_stop 的 tempo 参数写回'),
     ('S2', 'S1'): ('down_fx', '反向合法:降档回搜刮'),
     ('S3', 'S2'): ('down_fx', '反向合法:降档回探索'),
     ('S3', 'S1'): ('down_fx', '反向合法:降档回搜刮'),
     ('S3', 'S-BT'): ('time_fold', '交火→时停:高频抽离+折叠淡出,1 小节(玩家主动,≤1 小节边界)'),
     ('S-BT', 'S3'): ('time_unfold', '时停→交火:32 分滚奏渐强(2 拍)+ 密度骤回'),
+    ('S6', 'S1'): ('loop_return', '循环预伏:无缝回环(大循环成品专用)'),
+    ('S5', 'S1'): ('loop_return', '循环预伏备用:冲刺直回搜刮(无 S6 的快循环)'),
 }
 _NODES = ('S1', 'S2', 'S3', 'S4', 'S5', 'S6', 'S-BT')
 TRANSITIONS = {
@@ -272,7 +332,7 @@ if __name__ == '__main__':
         for r in ('celli', 'vln2', 'synth_pad', 'bass_electric', 'drums'):
             s.cc(r, 11, 80, t0)
 
-    # 连续插入 7 个元素(各用不同和弦,覆盖全部和弦表)
+    # 连续插入 8 个元素(各用不同和弦,覆盖全部和弦表)
     b = riser(s, 5, CH, chord='Em')            # m5-6
     b = down_fx(s, b, CH, chord='C')           # m7
     b = roll32(s, b, CH)                       # m8
@@ -280,6 +340,7 @@ if __name__ == '__main__':
     b = harmony_prehang(s, b, CH, chord='D')   # m10
     b = time_fold(s, b, CH, chord='Em')        # m11
     b = time_unfold(s, b, CH)                  # m12
+    b = loop_return(s, b, CH)                  # m13-14
 
     buf = io.StringIO()
     with contextlib.redirect_stdout(buf):
@@ -287,7 +348,7 @@ if __name__ == '__main__':
         issues = s.report('/tmp/smk_trans.mid')   # flush 不返回自检数,须显式 report
     out = buf.getvalue()
     bad = out.count('[音区告警]') + out.count('[冲突]')
-    ok_bar = (b == 13)                          # 骨架 4 + riser 2 + 其余 1×6 = 12 小节,游标 13
+    ok_bar = (b == 15)                          # 骨架 4 + riser 2 + 其余 1×6 + loop_return 2 = 14 小节,游标 15
     print(out)
     print(f'smoke transitions: {"PASS" if (bad == 0 and issues == 0 and ok_bar) else "FAIL"}'
           f' (告警+冲突={bad}, 自检冲突={issues}, 游标 b={b}, 期望 13)')
