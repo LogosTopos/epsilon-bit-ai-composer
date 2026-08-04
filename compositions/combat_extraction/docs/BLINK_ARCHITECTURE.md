@@ -115,6 +115,10 @@ AudioServer.add_bus(); AudioServer.set_bus_name(AudioServer.bus_count-1, "SFX")
    (player/sideview/tutorial 三处);③ 音乐变奏:高波(wave≥4)bass/drums +2.5dB、
    stab/atmosphere -3dB;④ stinger 落地:击杀 → M3 音头短重音(限流 1.5s,
    素材 stinger.wav 自 drums stem 5.357s 处截取)
+✅ v3(用户试玩反馈):① 死亡结算界面(阵亡覆盖层:存活波次/得分 +
+   重新开始/返回主菜单/退出按钮,鼠标恢复可见)——此前死亡后无任何界面;
+   ② 确认波次无限刷新(敌数 = 5+wave 线性增长,玩家不死则永续);
+   ③ 教程内死亡 → "按 R 重新开始教程"
 ⏳ 未做:热噪层(热量专用层);.app 重导出(当前 `Godot --path` 直跑)
 
 ### 4.6 先做哪个(建议顺序)
