@@ -110,8 +110,12 @@ AudioServer.add_bus(); AudioServer.set_bus_name(AudioServer.bus_count-1, "SFX")
 ✅ 资源:assets/music/prepare_loop.wav(S1 预混 55s 循环)/ calm_once.wav(S6)
    / battle_stems/*.wav(母节 5 stems 16-bit 单圈 22.857s loop)
 ✅ 验证:--headless --import 零报错;main/tutorial 场景 180 帧零 ERROR
-⏳ 未做:stinger(击杀/换弹事件重音);高波层/热噪层;.app 重导出
-   (当前用 `Godot --path ~/Projects/blink-recovered` 直跑)
+✅ v2(用户试玩反馈):① 战斗音乐循环修复(loop 属性 + finished 重播双保险,
+   解决"战斗没结束音乐就停");② 触控板适配:瞬移/处决加 K 键替代右键
+   (player/sideview/tutorial 三处);③ 音乐变奏:高波(wave≥4)bass/drums +2.5dB、
+   stab/atmosphere -3dB;④ stinger 落地:击杀 → M3 音头短重音(限流 1.5s,
+   素材 stinger.wav 自 drums stem 5.357s 处截取)
+⏳ 未做:热噪层(热量专用层);.app 重导出(当前 `Godot --path` 直跑)
 
 ### 4.6 先做哪个(建议顺序)
 1. ✅ 总线 + 预混成品单轨播放(已完成)
