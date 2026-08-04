@@ -2,7 +2,8 @@
 
 > **本文件是权威交接文档**(2026-08 定稿)。新会话开工**先读本文件**,
 > 再读 `ARCHITECTURE.md`(母节/子节体系)与 `作品说明.md`(成品口径)。
-> 历史文档(`COMPOSITION_PLAN.md`/`DIAGNOSIS_v6.md`/`PLAN_v7.md`)已归档,仅作背景参考。
+> 历史规划文档(`COMPOSITION_PLAN.md`/`DIAGNOSIS_v6.md`/`PLAN_v7.md`/`ROADMAP.md`)
+> 已归档至 `archive/combat_extraction/pre_status_docs/`,仅作背景参考。
 
 ---
 
@@ -21,7 +22,6 @@ stinger/游戏内教程/死亡界面/K 键触控板适配),仓库已推 GitHub(L
 |---|---|
 | `Combat_Extraction.mid/.mp3` | **主成品 = 母节 v9 合成器版**(Hook = 方波 0/80,stab 完全辅助化) |
 | `Combat_Extraction_v9_trumpet.mid/.mp3` | 小号版(对比保留,用户听感:合成器 > 小号) |
-| `Combat_Extraction_v8_*.mid/.mp3` `v7_*` | 历史版本(可删除) |
 | `S1_Scavenge.mid/.mp3` | **子节 1《低音入场版》**(搜刮/开场氛围) |
 | `stems/stem_*.wav` | 5 组 stems 混音缓存(改层后必须删了重渲染) |
 
@@ -135,14 +135,22 @@ rm -f stems/stem_* && python3 mix_stems.py --mid in.mid --render-stems
   用 GUGS 精确布局 (bank=prog, prog=0)——brass=(57,0),trumpet=(56,0)。
 - **强度弧线(高潮段口径)**:全曲平稳(轮间 ≤1.6dB),无档位落差;回环连续。
 
-## 6. 下一步(路线)
+## 6. 下一步(路线,2026-08-05 更新)
 
-1. **转场元素库** `sections/transitions.py`:riser/下行FX/32分滚奏/和声预挂
-2. **子节 2~6**(sections/):S2 探索(删 fx+密度降)/S4 危机(旋律+1半音+心率kick)/
-   S5 撤离(BPM+8+八度叠置)/S6 结算(S1 变体+Em 长音淡出)
-3. **连播 demo**:S1→S2→S3(母节)→S4→S3→S5→S6 带转场
-4. 工具链沉淀:audit 泛化为 `scripts/audit_composition.py`(任意曲目一键审计)
-5. stems 交付:5 组 stems 供 FMOD/Wwise 垂直混音(子节 = 引擎内层开关)
+已完成(历史):转场元素库 ✅ / 子节 2~6 ✅ / 连播 demo ✅ / stems 交付 ✅(export_stems.py)。
+
+当前待办(优先级从高到低,详见仓库根 docs/HANDOVER.md §5):
+
+1. **S-BT 子弹时间子节**(设计已定稿,未实现):规格见 THERMOCLINE_MUSIC_DESIGN.md §3——
+   心跳 kick(8 分双发 68/80)+ 时间晶体(hook 高区闪烁,每 2 小节 1-2 音)+ 弦乐长音拉长;
+   无 16 分驱动;音乐不变速(168 保持),低通感靠减高频打击乐;time_fold/time_unfold 转场元素
+2. **S4/S5 按红线重做**(规格见 THERMOCLINE_MUSIC_DESIGN.md §3):
+   S4 重做版=心率 kick + bass 应答原位 + hook 原位(vel+4),不加 brass,弃多调性;
+   S5 重做版=176 BPM + 32 分 hat + 母节 bass/hook 原位,riser 用母节 42-72 原版,弃八度叠置
+3. **横版 main_sideview.gd BATTLE 音乐挂点**(一行 MusicManager.set_section,目前缺失)
+4. **热噪层**(热量>70% 垂直 stems:fx 高频嘶声 + pad 根音 16 分脉冲)
+5. 远期:S-抢救主线场景 / 菜单循环变体 / 横版教程覆盖 / .app 正式打包
+6. 工具链:audit 泛化为 `scripts/audit_composition.py`(任意曲目一键审计,低优先)
 
 ## 7. 版本历史(全量,提交号)
 

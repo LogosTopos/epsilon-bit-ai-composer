@@ -1,6 +1,6 @@
 # 交接文档 — ε-bit-ai-composer(2026-08 会话全量交接)
 
-> **给新 Agent 的开工指引**:先读本文档,再读 `compositions/combat_extraction/docs/STATUS.md`(音乐侧权威)、`docs/BLINK_ARCHITECTURE.md`(游戏侧权威)、`README.md`(对外口径)。所有结论均来自实际执行与实测。
+> **给新 Agent 的开工指引**:先读本文档,再读 `compositions/combat_extraction/docs/STATUS.md`(音乐侧权威)、`compositions/combat_extraction/docs/BLINK_ARCHITECTURE.md`(游戏侧权威)、`README.md`(对外口径)。所有结论均来自实际执行与实测。
 
 ---
 
@@ -89,7 +89,7 @@
 4. **热噪层**(热量专用素材,当前只有 bass/drums +2dB 近似)
 5. **.app 正式打包**(当前 `Godot --path` 直跑;方案 B 流程见 BLINK_MAC_PORT.md)
 6. S-抢救(主线剧情场景,远期)/ 菜单循环变体
-7. ai-music-composer 空仓库删除(需 delete_repo scope,GH_TOKEN 环境变量阻碍 refresh)
+7. ~~ai-music-composer 空仓库删除~~(2026-08-05 核实:仓库已不存在,已删),遗留:GH_TOKEN 环境变量阻碍 token refresh(不影响日常使用)
 8. 横版教程覆盖(tutorial 目前只用俯视 main.tscn)
 
 ## 6. 给新 Agent 的纪律清单
