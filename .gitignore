@@ -57,3 +57,6 @@ archive/fm-renders/
 compositions/infinity_reverse/audio/
 compositions/infinity_reverse/data/
 compositions/infinity_reverse/plots/
+
+# contrapunctus_abyssi: stem 混音中间产物(拆轨 MIDI/统计/WAV)不入库
+compositions/contrapunctus_abyssi/stems/
