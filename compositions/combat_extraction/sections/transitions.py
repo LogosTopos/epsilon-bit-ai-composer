@@ -37,11 +37,23 @@
                                                小节 2 = S1 首小节逐字复刻(bass 8 分脉冲 +
                                                kick/snare/hat/crash)——循环点两侧为两个
                                                相同小节,接缝不可察觉
+  step_up(s, bar0, ch) ....................... 1 小节 轻升档桥(S1→S2):S1 素材本体延续,
+                                               snare 58→62 + hat 48→50(步态变警觉)
+  engine_start(s, bar0, ch) .................. 2 小节 引擎启动桥(S2→母节):小节 1 怠速
+                                               (8 分步态 + kick 3+3+2 轻入),小节 2 全速
+                                               (bass BASS_P1 16 分原位 + kick 满 + hat 16 分)
+  morph_crisis(s, bar0, ch) .................. 1 小节 塌缩变形桥(母节→S4):满配层撤空 +
+                                               kick 3+3+2→心率双发 + bass 16 分→8 分
+  accel_roll(s, bar0, ch) .................... 1 小节 加速滚奏桥(S4→S5):snare 32 分滚奏
+                                               + hat 32 分渐入 + bass 根音脉冲(176 由 S5 处理)
 
 衔接矩阵 TRANSITIONS:节点 'S1'..'S6'(S3 = 母节)+ 'S-BT'(时停),键 (from, to) →
-(元素名, 说明)。合法衔接(游戏流程内)14 条:6 正向 + 3 反向 + 2 时停 + 2 循环
+(元素名, 说明)。合法衔接(游戏流程内)14 条:4 动机桥 + 3 反向 + 2 时停 + 2 循环
 (('S6','S1') → loop_return 无缝回环 / ('S5','S1') → loop_return 冲刺直回)+ 1 冲刺
-(('S4','S5') → roll32);其余组合一律 ('not_recommended', '游戏流程外')。
+(('S4','S5') → accel_roll)+ 2 备用(('S3','S5') → roll32 / 简单场景可用 riser)。
+⚠️ 大循环/连播成品一律用**动机桥**(step_up/engine_start/morph_crisis/accel_roll):
+素材取自相邻段落(节奏密度渐变 + 音色预伏),听感 = 段落自然变形,不是插入式音效;
+riser/down_fx/roll32 保留为简单场景与反向衔接备用。
 demo 连播(六子节)依据本矩阵插转场,见 sections/demo_playthrough.py;
 大循环成品见 sections/build_loop.py。
 
@@ -279,17 +291,147 @@ def loop_return(s, bar0, ch, **kw):
     return bar0 + 2
 
 
+def step_up(s, bar0, ch, **kw):
+    """1 小节:S1→S2 轻升档桥(素材 = S1 本体 + snare 增强,2026-08-05 设计)。
+    不用通用音效:S1 的 8 分 bass 脉冲原样延续,仅 snare 从 58 提到 62、
+    hat 48→50——'步态'开始警觉,听感 = S1 的第 17 小节,而非插入式转场。"""
+    for r in ('bass_electric', 'drums', 'celli', 'vla', 'vln2', 'vln1',
+              'synth_pad', 'choir'):
+        assert r in ch, f'step_up: 通道映射缺少角色 {r}'
+    t0 = (bar0 - 1) * 4
+    for r in ('bass_electric', 'celli', 'vla', 'vln2', 'vln1',
+              'synth_pad', 'choir', 'drums'):
+        s.cc(r, 11, 78, t0)
+        s.cc(r, 11, 80, t0 + 2.0)
+    for b in (0.0, 1.0, 2.0, 3.0):
+        s.note('drums', 36, 70, t0 + b, 0.2)           # kick 每拍(S1 原位)
+    for b in (1.0, 3.0):
+        s.note('drums', 38, 62, t0 + b, 0.2)           # snare 58→62(巡逻感)
+    for j in range(8):
+        s.note('drums', 42, 50, t0 + j * 0.5, 0.15)    # hat 8 分 48→50
+    for j, (p, v) in enumerate(zip((28, 28, 40, 28, 28, 40, 28, 35),
+                                   (84, 84, 90, 84, 84, 90, 84, 96))):
+        s.note('bass_electric', p, v, t0 + j * 0.5, 0.45)   # S1 bass 原位
+    for name, p in (('celli', 40), ('vla', 64), ('vln2', 64), ('vln1', 71)):
+        s.note(name, p, 40, t0, 3.9)                   # 弦乐长音接续
+    s.chord('synth_pad', (52, 55, 64), 30, t0, 3.9)
+    s.chord('choir', (52, 55, 64), 36, t0, 3.9)
+    return bar0 + 1
+
+
+def engine_start(s, bar0, ch, **kw):
+    """2 小节:S2→母节 引擎启动桥(2026-08-05 设计)。
+    不用 riser 音阶:节奏密度渐变——小节 1 怠速(bass 8 分步态 + kick 3+3+2 轻入
+    + hat 16 分预演),小节 2 全速(bass 母节 BASS_P1 16 分原位 + kick 3+3+2 满 +
+    hat 16 分 + snare 84)。听感 = 引擎从怠速到全速,母节是'长出来的'。"""
+    for r in ('bass_electric', 'drums', 'celli', 'vla', 'vln2', 'vln1',
+              'synth_pad', 'choir'):
+        assert r in ch, f'engine_start: 通道映射缺少角色 {r}'
+    t0 = (bar0 - 1) * 4
+    # ---- 小节 1:怠速 ----
+    for r in ('bass_electric', 'drums', 'celli', 'vla', 'vln2', 'vln1',
+              'synth_pad', 'choir'):
+        s.cc(r, 11, 78, t0)
+    for b in (0.0, 1.0, 2.0):
+        s.note('drums', 36, 70, t0 + b, 0.2)          # kick 每拍(3.0 由 3+3+2 承担)
+    for b in (1.0, 3.0):
+        s.note('drums', 38, 62, t0 + b, 0.2)
+    for j in range(8):
+        s.note('drums', 42, 44, t0 + j * 0.5, 0.15)
+    s.note('drums', 36, 66, t0 + 1.5, 0.2)             # kick 3+3+2 轻入
+    s.note('drums', 36, 72, t0 + 3.0, 0.2)
+    for j, (p, v) in enumerate(zip((28, 28, 40, 28, 28, 40, 28, 35),
+                                   (80, 80, 86, 80, 80, 86, 80, 92))):
+        s.note('bass_electric', p, v, t0 + j * 0.5, 0.4)
+    for name, p in (('celli', 40), ('vla', 64), ('vln2', 64), ('vln1', 71)):
+        s.note(name, p, 44, t0, 3.9)
+    s.chord('synth_pad', (52, 55, 64), 34, t0, 3.9)
+    s.chord('choir', (52, 55, 64), 40, t0, 3.9)
+    # ---- 小节 2:全速(母节轮 1 引擎)----
+    for r in ('bass_electric', 'drums', 'celli', 'vla', 'vln2', 'vln1',
+              'synth_pad', 'choir'):
+        s.cc(r, 11, 82, t0 + 4)
+    for b, v in ((4.0, 88), (5.5, 82), (7.0, 90)):
+        s.note('drums', 36, v, t0 + b, 0.2)          # kick 3+3+2 满(母节档)
+    s.note('drums', 38, 84, t0 + 5.0, 0.2)
+    s.note('drums', 38, 84, t0 + 7.0, 0.2)
+    for j in range(16):
+        s.note('drums', 42, 52, t0 + 4.0 + j * 0.25, 0.12)   # hat 16 分(母节档)
+    for k, p in enumerate((28, 40, 43, 47, 40, 43, 47, 40,
+                           43, 47, 43, 40, 47, 43, 40, 28)):
+        s.note('bass_electric', p, 92, t0 + 4.0 + k * 0.25, 0.22)   # BASS_P1['Em'] 原位
+    for name, p in (('celli', 40), ('vla', 64), ('vln2', 64), ('vln1', 71)):
+        s.note(name, p, 50, t0 + 4.0, 3.9)
+    s.chord('synth_pad', (52, 55, 64), 38, t0 + 4.0, 3.9)
+    s.chord('choir', (52, 55, 64), 44, t0 + 4.0, 3.9)
+    return bar0 + 2
+
+
+def morph_crisis(s, bar0, ch, **kw):
+    """1 小节:母节→S4 塌缩变形桥(2026-08-05 设计)。
+    不用转场音效:满配战斗层(hook/brass/fx/timpani)在 1 小节内撤空,
+    kick 3+3+2 直接变形为心率双发(84/64)、bass 16 分简化为 8 分(母节素材原位)、
+    hat 16 分降 8 分——听感 = 战斗'塌缩'成绝境心跳,S4 是母节变出来的。"""
+    for r in ('bass_electric', 'drums', 'celli', 'vla', 'vln2', 'vln1',
+              'synth_pad', 'choir'):
+        assert r in ch, f'morph_crisis: 通道映射缺少角色 {r}'
+    t0 = (bar0 - 1) * 4
+    for r in ('bass_electric', 'drums', 'celli', 'vla', 'vln2', 'vln1',
+              'synth_pad', 'choir'):
+        s.cc(r, 11, 82, t0)
+        s.cc(r, 11, 80, t0 + 2.0)
+    for j in range(8):                                 # 心率双发(84/64 每拍重-轻)
+        s.note('drums', 36, 84 if j % 2 == 0 else 64, t0 + j * 0.5, 0.18)
+    for b in (1.0, 3.0):
+        s.note('drums', 38, 60, t0 + b, 0.2)           # snare 轻
+    for j in range(8):
+        s.note('drums', 42, 40, t0 + j * 0.5, 0.12)    # hat 8 分(16 分撤)
+    for j, (p, v) in enumerate(zip((28, 28, 40, 28, 28, 40, 28, 35),
+                                   (88, 88, 92, 88, 88, 92, 88, 96))):
+        s.note('bass_electric', p, v, t0 + j * 0.5, 0.42)   # 8 分简化(母节素材)
+    for name, p in (('celli', 40), ('vla', 64), ('vln2', 64), ('vln1', 71)):
+        s.note(name, p, 60, t0, 3.9)                   # 弦乐保持(压迫垫)
+    s.chord('synth_pad', (52, 55, 64), 44, t0, 3.9)
+    s.chord('choir', (52, 55, 64), 50, t0, 3.9)
+    return bar0 + 1
+
+
+def accel_roll(s, bar0, ch, **kw):
+    """1 小节:S4→S5 加速滚奏桥(2026-08-05 设计,roll32 的动机化增强)。
+    snare 32 分滚奏渐强(40→88)保留为'速度感'动机,叠加 hat 32 分渐入
+    (40→54,预演 S5 的 32 分 hat)+ bass 根音 8 分脉冲轻入(预演 S5 bass 原位),
+    小节末 kick 重击——176 进入时 hat 已就位,加速是'长出来的'。"""
+    for r in ('drums', 'bass_electric'):
+        assert r in ch, f'accel_roll: 通道映射缺少角色 {r}'
+    t0 = (bar0 - 1) * 4
+    s.cc('drums', 11, 80, t0)
+    s.cc('drums', 11, 84, t0 + 2.0)
+    s.cc('bass_electric', 11, 80, t0)
+    for i in range(16):                                # snare 32 分滚奏(0.0-1.875)
+        v = 40 + round(48 * i / 15)
+        s.note('drums', 38, v, t0 + i * 0.125, 0.09)
+    for i in range(24):                                # hat 32 分渐入(1.0-3.875)
+        v = 40 + round(14 * i / 23)
+        s.note('drums', 42, v, t0 + 1.0 + i * 0.125, 0.07)
+    for b in (0.0, 1.0, 2.0, 3.0):
+        s.note('bass_electric', 28, 70, t0 + b, 0.3)   # 根音脉冲(轻,S5 bass 原位)
+    s.note('drums', 36, 92, t0 + 3.75, 0.2)            # 末拍重击,滚入 176
+    return bar0 + 1
+
+
+
+
 # ---------------------------------------------------------------------------
 # 衔接矩阵:(from, to) → (元素名, 说明);节点 'S1'..'S6'(S3 = 母节)
 # ---------------------------------------------------------------------------
 # 合法衔接 8 条(游戏流程内):6 条正向 + 3 条反向(规格拍板)
 _LEGAL = {
-    ('S1', 'S2'): ('riser', '低→中升档'),
-    ('S2', 'S3'): ('riser', '升档'),
-    ('S3', 'S4'): ('riser', '升档,S4 v2 心率 kick 绝境(无移调)'),
+    ('S1', 'S2'): ('step_up', '轻升档桥:步态渐变(素材=S1 本体+snare 增强,非通用 riser)'),
+    ('S2', 'S3'): ('engine_start', '引擎启动桥:2 小节怠速→全速(母节 kick 3+3+2 + bass 16 分预演)'),
+    ('S3', 'S4'): ('morph_crisis', '塌缩变形桥:满配→心率压迫(1 小节,S4 v2 无移调)'),
     ('S4', 'S3'): ('down_fx', '降档回原位调'),
-    ('S3', 'S5'): ('roll32', '冲刺,BPM 168→176 由 S5 build 内部处理'),
-    ('S4', 'S5'): ('roll32', '绝境→冲刺滚奏升档,BPM 168→176 由 S5 build 内部处理'),
+    ('S3', 'S5'): ('roll32', '冲刺,BPM 168→176 由 S5 build 内部处理(简单场景备用)'),
+    ('S4', 'S5'): ('accel_roll', '加速滚奏桥:32 分 hat 渐入 + snare 滚奏,176 由 S5 build 处理'),
     ('S5', 'S6'): ('crash_stop', '急停,BPM 176→168 由 crash_stop 的 tempo 参数写回'),
     ('S2', 'S1'): ('down_fx', '反向合法:降档回搜刮'),
     ('S3', 'S2'): ('down_fx', '反向合法:降档回探索'),
@@ -332,7 +474,7 @@ if __name__ == '__main__':
         for r in ('celli', 'vln2', 'synth_pad', 'bass_electric', 'drums'):
             s.cc(r, 11, 80, t0)
 
-    # 连续插入 8 个元素(各用不同和弦,覆盖全部和弦表)
+    # 连续插入全部过渡元素(骨架 4 小节 + 元素,覆盖全部和弦表)
     b = riser(s, 5, CH, chord='Em')            # m5-6
     b = down_fx(s, b, CH, chord='C')           # m7
     b = roll32(s, b, CH)                       # m8
@@ -341,6 +483,10 @@ if __name__ == '__main__':
     b = time_fold(s, b, CH, chord='Em')        # m11
     b = time_unfold(s, b, CH)                  # m12
     b = loop_return(s, b, CH)                  # m13-14
+    b = step_up(s, b, CH)                      # m15
+    b = engine_start(s, b, CH)                 # m16-17
+    b = morph_crisis(s, b, CH)                 # m18
+    b = accel_roll(s, b, CH)                   # m19
 
     buf = io.StringIO()
     with contextlib.redirect_stdout(buf):
@@ -348,7 +494,7 @@ if __name__ == '__main__':
         issues = s.report('/tmp/smk_trans.mid')   # flush 不返回自检数,须显式 report
     out = buf.getvalue()
     bad = out.count('[音区告警]') + out.count('[冲突]')
-    ok_bar = (b == 15)                          # 骨架 4 + riser 2 + 其余 1×6 + loop_return 2 = 14 小节,游标 15
+    ok_bar = (b == 20)                          # 骨架 4 + riser 2 + 其余 1×9 + loop_return 2 = 19 小节,游标 20
     print(out)
     print(f'smoke transitions: {"PASS" if (bad == 0 and issues == 0 and ok_bar) else "FAIL"}'
           f' (告警+冲突={bad}, 自检冲突={issues}, 游标 b={b}, 期望 13)')

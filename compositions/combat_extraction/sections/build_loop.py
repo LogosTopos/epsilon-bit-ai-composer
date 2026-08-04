@@ -14,10 +14,13 @@
 4. 遍间轮转(--cycle N):母节两段 cycle 互换、S-BT 晶体 cycle1、S5 bass plan
    cycle1——第 N 遍与前一遍有 1-2 处不同,循环不腻。
 
-## 结构(140 小节 ≈ 3:20,能量弧)
-  S1 搜刮(低) →riser→ S2 警觉(中低) →riser→ 母节 c1(高) →time_fold→
-  S-BT 时停(中低) →time_unfold→ 母节 c2(高+) →riser→ S4 绝境 v2(高) →roll32→
+## 结构(139 小节 ≈ 3:25,能量弧,开头无留白)
+  S1 搜刮(低) →step_up→ S2 警觉(中低) →engine_start→ 母节 c1(高) →time_fold→
+  S-BT 时停(中低) →time_unfold→ 母节 c2(高+) →morph_crisis→ S4 绝境 v2(高) →accel_roll→
   S5 冲刺 176(最高) →crash_stop(168 回写)→ S6 尘埃落定(低) →loop_return→ (回 S1)
+
+转场全部为**动机桥**(素材取自相邻段落:节奏密度渐变 + 音色预伏),
+不是插入式音效(riser)——听感 = 段落自然变形,一气呵成但有起承转合。
 
 用法:
   python3 sections/build_loop.py                # cycle 0(默认)
@@ -47,17 +50,17 @@ ROLE_CH = compose.ROLE_CH
 # 转场逐一与 TRANSITIONS 衔接矩阵交叉校验(不一致即断言失败)。
 STEPS = [
     ('S1 搜刮',          'S1',          16, 168),
-    ('riser S1->S2',     'riser',        2, 168),
+    ('step_up S1->S2',   'step_up',      1, 168),
     ('S2 警觉',          'S2',          16, 168),
-    ('riser S2->S3',     'riser',        2, 168),
+    ('engine_start S2->S3', 'engine_start', 2, 168),
     ('S3 母节 c1',       'S3',          16, 168),
     ('time_fold S3->S-BT', 'time_fold',  1, 168),
     ('S-BT 子弹时间',    'S-BT',        16, 168),
     ('time_unfold S-BT->S3', 'time_unfold', 1, 168),
     ('S3 母节 c2',       'S3',          16, 168),
-    ('riser S3->S4',     'riser',        2, 168),
+    ('morph_crisis S3->S4', 'morph_crisis', 1, 168),
     ('S4 绝境 v2',       'S4',          16, 168),
-    ('roll32 S4->S5',    'roll32',       1, 168),
+    ('accel_roll S4->S5', 'accel_roll',  1, 168),
     ('S5 冲刺(176)',     'S5',          16, 176),
     ('crash_stop S5->S6', 'crash_stop',  1, 168),
     ('S6 尘埃落定',      'S6',          16, 168),
@@ -66,8 +69,8 @@ STEPS = [
 
 # 与衔接矩阵的交叉校验(大循环用到的每条衔接必须等于矩阵推荐元素)
 _MATRIX_CHECK = [
-    ('S1', 'S2', 'riser'), ('S2', 'S3', 'riser'), ('S3', 'S-BT', 'time_fold'),
-    ('S-BT', 'S3', 'time_unfold'), ('S3', 'S4', 'riser'), ('S4', 'S5', 'roll32'),
+    ('S1', 'S2', 'step_up'), ('S2', 'S3', 'engine_start'), ('S3', 'S-BT', 'time_fold'),
+    ('S-BT', 'S3', 'time_unfold'), ('S3', 'S4', 'morph_crisis'), ('S4', 'S5', 'accel_roll'),
     ('S5', 'S6', 'crash_stop'), ('S6', 'S1', 'loop_return'),
 ]
 
@@ -95,14 +98,18 @@ def _run_step(s, b, kind, s3_cycles, loop_cycle):
         return S5.build(s, b, 1 if loop_cycle % 2 else 0, ROLE_CH)  # 176 由 build 内部写 tempo
     if kind == 'S6':
         return S6.build(s, b, 0, ROLE_CH)
-    if kind == 'riser':
-        return T.riser(s, b, ROLE_CH, chord='Em')
+    if kind == 'step_up':
+        return T.step_up(s, b, ROLE_CH)
+    if kind == 'engine_start':
+        return T.engine_start(s, b, ROLE_CH)
+    if kind == 'morph_crisis':
+        return T.morph_crisis(s, b, ROLE_CH)
+    if kind == 'accel_roll':
+        return T.accel_roll(s, b, ROLE_CH)
     if kind == 'time_fold':
         return T.time_fold(s, b, ROLE_CH, chord='Em')
     if kind == 'time_unfold':
         return T.time_unfold(s, b, ROLE_CH)
-    if kind == 'roll32':
-        return T.roll32(s, b, ROLE_CH)
     if kind == 'crash_stop':
         return T.crash_stop(s, b, ROLE_CH, tempo=168, chord='Em')
     if kind == 'loop_return':
@@ -117,7 +124,7 @@ def build_loop(s, loop_cycle=0):
         assert rec[0] == element, f'loop: 矩阵要求 {frm}->{to} 用 {rec[0]},实际 {element}'
     L_riff.VOICE_BOOST = 6                     # 合成器嗓力度补偿(compose --voice synth 口径)
     s.tempo(168, 0.0)
-    b = 3                                      # 对齐母节惯例:m1-2 留白,从 m3 起
+    b = 1                                      # 无留白:成品曲从头开始(用户反馈:开头空白)
     spans = []
     # 遍间轮转:cycle 奇数 → 母节两段互换(先 c1 后 c0)+ S-BT/S5 用 cycle1 变体
     s3_cycles = [1, 0] if loop_cycle % 2 else [0, 1]

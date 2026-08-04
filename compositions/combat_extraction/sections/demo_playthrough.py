@@ -55,11 +55,11 @@ ROLE_CH = compose.ROLE_CH
 # S3(母节)直接调 layers/drums.py + bass_harmony.py + riff_texture.py 的 build 充当。
 STEPS = [
     ('S1 搜刮',        'S1',        16, 168),
-    ('riser S1->S2',   'riser',      2, 168),
+    ('step_up S1->S2', 'step_up',    1, 168),
     ('S2 探索',        'S2',        16, 168),
-    ('riser S2->S3',   'riser',      2, 168),
+    ('engine_start S2->S3', 'engine_start', 2, 168),
     ('S3 母节 c0',     'S3',        16, 168),
-    ('riser S3->S4',   'riser',      2, 168),
+    ('morph_crisis S3->S4', 'morph_crisis', 1, 168),
     ('S4 危机',        'S4',        16, 168),
     ('down_fx S4->S3', 'down_fx',    1, 168),
     ('S3 母节 c1',     'S3',        16, 168),
@@ -71,7 +71,7 @@ STEPS = [
 
 # 与衔接矩阵的交叉校验:正向流程用的转场必须等于 TRANSITIONS 推荐元素
 _MATRIX_CHECK = [
-    ('S1', 'S2', 'riser'), ('S2', 'S3', 'riser'), ('S3', 'S4', 'riser'),
+    ('S1', 'S2', 'step_up'), ('S2', 'S3', 'engine_start'), ('S3', 'S4', 'morph_crisis'),
     ('S4', 'S3', 'down_fx'), ('S3', 'S5', 'roll32'), ('S5', 'S6', 'crash_stop'),
 ]
 
@@ -99,8 +99,12 @@ def _run_step(s, b, kind, s3_cycle):
         return S5.build(s, b, 0, ROLE_CH)      # 176 BPM 由 build 内部写 tempo
     if kind == 'S6':
         return S6.build(s, b, 0, ROLE_CH)
-    if kind == 'riser':
-        return T.riser(s, b, ROLE_CH, chord='Em')
+    if kind == 'step_up':
+        return T.step_up(s, b, ROLE_CH)
+    if kind == 'engine_start':
+        return T.engine_start(s, b, ROLE_CH)
+    if kind == 'morph_crisis':
+        return T.morph_crisis(s, b, ROLE_CH)
     if kind == 'down_fx':
         return T.down_fx(s, b, ROLE_CH, chord='Em')
     if kind == 'roll32':
