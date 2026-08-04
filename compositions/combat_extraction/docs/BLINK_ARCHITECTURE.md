@@ -98,10 +98,25 @@ AudioServer.add_bus(); AudioServer.set_bus_name(AudioServer.bus_count-1, "SFX")
 5. main.gd / player.gd / enemy_base.gd 插 3-5 个调用点(状态刷新 + stinger)
 6. 导出 macOS .app(ad-hoc 签名,见 BLINK_MAC_PORT.md 方案 B)
 
-### 4.5 先做哪个(建议顺序)
-1. 总线 + 预混成品单轨播放(最快见效:菜单循环 + 战斗母节 + 结算,2 小时)
-2. stems 垂直 + 状态机(波次/热量/时停低通)
-3. stinger 系统(锦上添花)
+### 4.5 实施状态(2026-08 已落地,工作副本 ~/Projects/blink-recovered)
+✅ 已实施:① Music/SFX 总线(AudioManager/MusicManager 幂等创建,枪声挂 SFX)
+② music_manager.gd 三态状态机(PREPARE=S1 预混循环 / BATTLE=母节 5 stems 垂直
+/ CALM=S6 预混),段落切换 0.8s 交叉淡化
+③ 时停:Music 总线低通 800Hz 渐入/出(音乐不变速,枪声变速为原版已有)
+④ 热量 >70%:bass/drums +2dB
+⑤ 场景挂点:main_menu→PREPARE / main._ready→BATTLE / player 死亡→CALM
+⑥ 游戏内教程:tutorial.tscn(7 步,复用 main 场景,完成判定基于真实状态)
+   + 主菜单"教 程"按钮(替换禁用占位)
+✅ 资源:assets/music/prepare_loop.wav(S1 预混 55s 循环)/ calm_once.wav(S6)
+   / battle_stems/*.wav(母节 5 stems 16-bit 单圈 22.857s loop)
+✅ 验证:--headless --import 零报错;main/tutorial 场景 180 帧零 ERROR
+⏳ 未做:stinger(击杀/换弹事件重音);高波层/热噪层;.app 重导出
+   (当前用 `Godot --path ~/Projects/blink-recovered` 直跑)
+
+### 4.6 先做哪个(建议顺序)
+1. ✅ 总线 + 预混成品单轨播放(已完成)
+2. ✅ stems 垂直 + 状态机(已完成,含时停低通/热量加成)
+3. ⏳ stinger 系统(击杀/换弹短促重音,素材规格见 THERMOCLINE_MUSIC_DESIGN §3)
 
 ## 5. 输入速查(给教程 Agent 的交叉验证)
 
