@@ -51,7 +51,8 @@ curl -L -o soundfonts/MuseScore_General.sf2 \
 │   └── verify_render.py   # 渲染链路验证工具
 ├── soundfonts/            # 音色库(大文件,不入库,按上文下载)
 ├── docs/
-│   └── TECH_STACK.md      # 完整技术栈规格与决策记录
+│   ├── TECH_STACK.md      # 完整技术栈规格与决策记录
+│   └── REVISION_HISTORY.md # 《深渊之战》逐轮打磨记录(6 轮修订,含技术规则沉淀)
 └── archive/
     ├── legacy-8bit/       # 旧 8-bit 工作台实验(已归档,仅本地保留)
     ├── fm-renders/        # 旧 FM 测试音色库渲染产物(教训参考)
@@ -64,6 +65,7 @@ curl -L -o soundfonts/MuseScore_General.sf2 \
 - **渲染层**:FluidSynth `-R 0.9` 大房间混响(还原"小编制在大空间录制"的风格诉求)
 - **验证层**:生成时声部核对(调性/转调信号/动机)+ 渲染后 RMS 分段曲线 + 成品峰值 ≈ -1.0 dB
 - 详细规格见 [docs/TECH_STACK.md](docs/TECH_STACK.md)
+- 逐轮修订记录与技术规则沉淀(转场五件套、声部分层、对位归位)见 [docs/REVISION_HISTORY.md](docs/REVISION_HISTORY.md)
 
 ## 许可
 
