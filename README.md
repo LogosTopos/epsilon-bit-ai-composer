@@ -8,6 +8,7 @@
 
 | 作品 | 目录 | 说明 |
 |---|---|---|
+| 《深渊之战》Battle in the Abyss | `compositions/abyssal_battle/` | **战斗风格 + BPM 变速叙事**(96→150,冲刺骤停);鼓组/切分/十六分驱动;防削波 limiter 链路 |
 | 《无名之渊》The Nameless Abyss | `compositions/nameless_abyss/` | 小调叙事结构:下行坠落动机 → 上行转调 → 全奏高潮 → 归于寂静(动态跨度 13 dB,经 RMS 分段验证) |
 | 《深渊回响》Echoes of the Abyss | `compositions/echoes_of_the_abyss/` | 大调空灵风格,竖琴琶音 + 钟琴微光 + 合唱吟唱 |
 
@@ -18,13 +19,14 @@
 ```bash
 # 生成 MIDI(可调速度/移调/输出名)
 python3 compositions/nameless_abyss/compose.py --bpm 69 --transpose 0
+python3 compositions/abyssal_battle/compose.py --speed 1.0   # 战斗曲,整体速度缩放
 
 # 渲染 WAV(需先下载音色库,见下)
 fluidsynth -F out.wav -r 44100 -R 0.9 -C 0 -g 1.2 \
   soundfonts/MuseScore_General.sf2 The_Nameless_Abyss.mid
 
-# 压 MP3(峰值管理)
-ffmpeg -y -i out.wav -af "volume=<补偿dB>" -codec:a libmp3lame -q:a 2 out.mp3
+# 压 MP3(峰值管理;战斗曲等峰值密度高的建议加 limiter)
+ffmpeg -y -i out.wav -af "volume=<补偿dB>,alimiter=limit=0.95" -codec:a libmp3lame -q:a 2 out.mp3
 
 # 一键验证(声部核对 + RMS 分段 + 峰值)
 python3 scripts/verify_render.py --mid ... --audio ... --segments "..."
