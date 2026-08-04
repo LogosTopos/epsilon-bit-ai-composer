@@ -39,9 +39,18 @@ PROGS = {
     # GUGS Power Kit(128/16):kick -22.5/snare -22.3/crash -23.9 三库最强,
     # M1 动机 pattern -19.1dB;MuseScore Power 备选(-20.7dB)
     'drums':      (128, 16, (0, 127), 64, 20),
-    # GUGS Distortion Guitar:实测 -18.0dB(peak -7.3)最响最冲;
-    # MuseScore 0/30 -20.4 备选;31/27/28 均更弱(28 muted 近静音)
-    'guitar_dist':   (0, 30, (40, 88), 40, 45),
+    # ⚠️ v7 音色删减:guitar_dist(0,30) 已删除——库乐队 GM 映射 prog 30 = Hard Rock.patch,
+    #    全曲唯一跨流派(硬摇滚)音色(用户发现,经 GM_Instrument_Mapping.plist 验证)。
+    #    Hook 换嗓:hook 角色 = trumpet(56,0) 或 synth_lead(0,80),由 compose.py --voice 决定。
+    # GUGS 精确 (56,0) Trumpet:与 (57,0) 长号同布局,双库下精确命中;
+    # 实测 Hook 音区 69-83 渲染 -23.7dB(peak -7.5),顶替嗓最强,军事史诗本命
+    'trumpet':    (56, 0, (55, 88), 52, 45),
+    # GUGS (0,80) Lead 1 square:实测 -30.8dB(vel 80),音头弱于小号,Hook 层 vel +6 补偿
+    'synth_lead': (0, 80, (55, 88), 52, 45),
+    # v7 新增:切分和声节奏层(原'节奏吉他'位,失真取消后由电子方波补位)
+    'synth_rhythm': (0, 80, (57, 64), 58, 45),
+    # v7 新增:riser/下行 FX(方波 16 分音阶上行模拟扫频;库内无真 riser 音色)
+    'fx':         (0, 80, (55, 90), 64, 55),
     'timpani':    (0, 47, (26, 60), 64, 30),
     # GUGS 精确 (57,0) Trombone:双库下精确命中(实测基频占 61%,厚实刺刀);
     # ⚠️ 陷阱:双库渲染下 (17,56) 会 fallback 到 GUGS 的 (17,0)=Percussive Organ(管风琴哨音),

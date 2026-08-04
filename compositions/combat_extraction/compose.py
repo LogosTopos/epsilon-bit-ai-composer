@@ -15,21 +15,30 @@ import layers.drums as L_drums
 import layers.bass_harmony as L_bass
 import layers.riff_texture as L_riff
 
-# 角色 → 通道(规划 §5)
+# 角色 → 通道(规划 §5 + PLAN_v7)
+# v7:hook = 小号(56,0)/合成器(0,80) 二选一(compose --voice);guitar_dist 已删除
 ROLE_CH = {
     'piano_bang': 0, 'synth_pad': 1,
     'vln1': 2, 'vln2': 3, 'vla': 4, 'celli': 5,
     'bass_electric': 6,
-    'drums': 9, 'guitar_dist': 10, 'timpani': 11,
-    'brass_stab': 12, 'keys': 13, 'choir': 14,
+    'fx': 7,
+    'drums': 9, 'hook': 10, 'timpani': 11,
+    'brass_stab': 12, 'keys': 13, 'choir': 14, 'synth_rhythm': 15,
 }
 
+# Hook 嗓选项:trumpet(56,0 GUGS 精确,实测 -23.7dB)/ synth(0,80 方波,需 vel 补偿)
+HOOK_VOICES = {'trumpet': 'trumpet', 'synth': 'synth_lead'}
 
-def build(s: Score):
+
+def build(s: Score, voice='trumpet'):
     for role, ch in ROLE_CH.items():
-        bank, prog, (lo, hi), pan, rev = PROGS[role]
+        if role == 'hook':
+            bank, prog, (lo, hi), pan, rev = PROGS[HOOK_VOICES[voice]]
+        else:
+            bank, prog, (lo, hi), pan, rev = PROGS[role]
         s.add_instr(role, ch, bank, prog, lo, hi, pan, rev)
         s.cc(role, 7, 100, 0.0)
+    L_riff.VOICE_BOOST = 6 if voice == 'synth' else 0   # 方波音头弱,vel 补偿
 
     s.tempo(168, 0.0)                        # 168 BPM(战斗曲速度)
 
@@ -45,14 +54,17 @@ def main():
     import argparse
     ap = argparse.ArgumentParser(description='《搜打撤》战斗背景曲')
     ap.add_argument('--out', default='Combat_Extraction.mid')
+    ap.add_argument('--voice', choices=('trumpet', 'synth'), default='trumpet',
+                    help='Hook 嗓:trumpet(56,0 小号)/ synth(0,80 方波)')
     args = ap.parse_args()
     s = Score(humanize=True, seed=42)
-    build(s)
+    build(s, voice=args.voice)
     s.flush(args.out)
     print('=== 结构 ===')
     print('  Intro m1-2 → 母loop m3-18 ×2 → Outro m19-20')
     print('  168 BPM, E 小调,Em-C-G-D 循环和声')
     print('  时长 ≈ 57s(母 loop 22.9s,可无限循环)')
+    print(f'  Hook 嗓: {args.voice}')
 
 
 if __name__ == '__main__':

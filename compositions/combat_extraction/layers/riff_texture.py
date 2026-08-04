@@ -1,73 +1,77 @@
 #!/usr/bin/env python3
-"""riff_texture.py — 《搜打撤》战斗背景曲:riff/纹理层
+"""riff_texture.py — 《搜打撤》战斗背景曲:riff/纹理层(高潮段满配版)
 
-职责(规划 §5 角色):brass_stab(M2 刺刀)、guitar_dist(Hook)、choir、
-piano_bang、synth_pad。16 小节母 loop(小节 = bar0 起),返回 bar0+16:
-  rel 0-3   档1:本层静默
-  rel 4-7   档2:brass_stab M2(vel 80)
-  rel 8-11  档3:brass_stab M2(vel 90)+ guitar_dist Hook + choir + piano_bang + synth_pad
-  rel 12-13 呼吸:choir Em 长音(vel 50),其余静默
-和弦:rel 4-11 = Em|C|G|D 循环,rel 12-13 = Em(规划 §4)
-M3 齐击:brass 在 4 小节圈第 4 小节第 4 拍(rel 7、11)奏 64(E4)vel 96,与贝斯/鼓同步;
-        档1 圈(rel 3)按"档1 不出现"不发声
-CC11:档2 72 / 档3 84 / 呼吸 66(本层角色全按档位)
-
-设计决策(仅力度/细节微变,动机音高与规划一致):
-  1. M2 为 8 分刺刀:每小节 0/0.5/1/1.5 拍 4 个短音,后半小节休止(dur 0.35),
-     2 小节音高循环 64 65 64 65 | 64 65 67 65;beat 3.0 留空给 M3 齐击
-  2. Hook cycle=1 微变:Em 小节末 2 音降八度(76 78 → 64 66)。高八度选项
-     (88 90)中 90 超 guitar 音区上限 88,故选降八度(音级不变,不破和声)
-  3. cycle=1 档3 其余小节(C/G/D):Hook 不铺满,改第 1/3 拍和弦音单音刺点
-     (vel 70,dur 0.3),保持攻击性并防腻(规划 §6 cycle=1 微变)
-  4. piano_bang G 小节根音 31(G1)超音区 36-84,整体上移八度用 43+55
-     (根音+八度双音手势不变)
-  5. synth_pad 选"仅档3 与合唱叠置"(vel 40):档2 长音已由 strings 层承担,
-     避免重复(规划 §5 synth_pad 注明可只档3)
+母节 = 高潮段(用户决策):16 小节全程满配,无档位,4 轮对话链横向叙事。
+角色:brass_stab(M2 刺刀+M3)、hook(小号/合成器)、choir、piano_bang、synth_pad、
+synth_rhythm(切分节奏层)、fx(riser+低脉冲)。
+- hook 对话链:bar1 全 riff → bar2 缩刺点(让位 brass 插入+bass 应答)→
+  bar3 全 riff(轮3 变奏)→ bar4 全 riff(轮4 末减力回环)
+- 轮次微变:轮2 bar1 尾 2 音降 8 度;轮3 bar3 变奏(A5 经过音);轮4 bar4 减力
+- brass M2 全程(0.75/1.25/2.75/3.25 互锁位)+ M3 rel 3/7/11 @3.0
+- fx:rel 3/7/11 轮末 riser(五声上行 6 音,弦乐/pad/choir 让位 2.0)+ 每小节 0.0 低脉冲
+CC11:轮起点 80/82/84/82(微弧)
 """
 import sys, os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-# 和声表(规划 §4):小节和弦序
-CHORDS = ('Em', 'C', 'G', 'D')
+# 合成器版力度补偿(compose.py 注入:synth 时 = 6)
+VOICE_BOOST = 0
 
-# M2 刺刀(和谐修正:降 5 度):59/60/62 = Bb3/C4/D4。
-# 原 64/65/67(E4/F4/G4)与和声长音(中提 E4、二提 F#4)持续半音摩擦(实测 330 次碰撞);
-# 降 5 度后与全部和声长音零碰撞,且进入长号甜区
-M2 = ((59, 60, 59, 60), (59, 60, 62, 60))
+# 16 小节和弦序(4 轮:轮1 Em Em C D,轮2-4 Em C G D)
+CHORDS16 = ('Em', 'Em', 'C', 'D', 'Em', 'C', 'G', 'D',
+            'Em', 'C', 'G', 'D', 'Em', 'C', 'G', 'D')
 
-# Hook(规划 §3):每小节 8 × 8 分(拍 0-3.5)
+# M2 刺刀(半音威胁动机,两轮和谐修正后):57/58 = A3/Bb3,62 = D4。
+# v5 降 5 度(64,65,67→59,60,62)后与 vln1 顶声部 71(大七度)及 pad 48 仍摩擦;
+# v7 再降 60→58:与全部长音/短音层 ≥4 半音(实测 282→目标 ≤150 的关键砍项)
+M2 = ((57, 58, 57, 58), (57, 58, 62, 58))
+M2_SLOTS = (0.75, 1.25, 2.75, 3.25)   # 互锁位:填补 bass/hook 空隙
+BRASS_VEL = (80, 88, 78, 88)
+
+# Hook(规划 §3):每小节 8 × 8 分;重音位 0.5/2.0/3.5(互锁表)
 HOOK = {
-    'Em': (76, 78, 79, 78, 79, 78, 76, 78),   # 高音修复:B5/A5→G5(实测 79 高频占比最低)
+    'Em': (76, 78, 79, 78, 79, 78, 76, 78),
     'C':  (72, 76, 77, 79, 77, 76, 72, 76),
     'G':  (71, 74, 76, 79, 76, 74, 71, 74),
-    'D':  (69, 71, 74, 78, 74, 71, 69, 71),   # b7(C5)→六音(B4),D 和弦内更和谐
+    'D':  (69, 71, 74, 78, 74, 71, 74, 71),   # 索引6 原 69(A4)与 M2 58 大七度,改 74
 }
+HOOK_VAR = (71, 74, 76, 79, 81, 79, 76, 74)   # 轮3 bar3 变奏(A5 经过音)
 
-# cycle=1 切分刺点(第 1/3 拍,和弦音单音,vel 70)——档3 C/G/D 小节
-GUITAR_STAB = {
-    'C': (72, 76),   # C5 E5
-    'G': (71, 74),   # B4 D5
-    'D': (69, 74),   # A4 D5
+# 节奏层切分和弦(57-64 带;v7 和谐修正:M2 降至 57/58 后,各小节避开其±1)
+RHY_CHORD = {
+    'Em': (55, 64),   # G3 E4
+    'C':  (62, 64),   # D4 E4
+    'G':  (55, 62),   # G3 D4
+    'D':  (50, 62),   # D3 D4(根音+5 音)
 }
+RHY_SLOTS = (0.25, 1.0, 2.0, 3.0)
 
-# 合唱/合成垫长音和弦(3 音;和弦音 +12,+12 低于音区 48 的 G 用 +24)
+# 合唱/合成垫长音和弦(3 音;v7 和谐修正:Em/G/D 避开与 M2 的摩擦)
 CHOIR_VOICE = {
-    'Em': (52, 55, 59),
+    'Em': (52, 55, 64),
     'C':  (48, 52, 55),
-    'G':  (55, 59, 62),
-    'D':  (50, 54, 57),
+    'G':  (55, 62, 67),
+    'D':  (50, 54, 62),
 }
 
-# 钢琴低音重击根音(§3 M3 低音音级;G1=31 超音区 36-84,上移八度用 G2=43)
+# 钢琴低音重击根音(G1=31 超音区,上移八度用 G2=43)
 PIANO_ROOT = {'Em': 40, 'C': 36, 'G': 43, 'D': 38}
 
-# 本层角色(规划 §5)
-ROLES = ('brass_stab', 'guitar_dist', 'choir', 'piano_bang', 'synth_pad')
+# riser(rel 3/7/11 轮末,2.0-3.25 六音五声上行;和弦音避让长音摩擦)
+RISER = {
+    'Em': (64, 67, 69, 71, 74, 76),
+    'D':  (62, 66, 69, 71, 74, 78),
+}
+RISER_VEL = (50, 58, 66, 74, 80, 86)   # 3.0 槽 80(humanize ±2 后 <84,不越互锁阈值)
+
+CC11_TIER = (80, 82, 84, 82)   # 轮起点 CC11 微弧
+
+ROLES = ('brass_stab', 'hook', 'choir', 'piano_bang', 'synth_pad',
+         'synth_rhythm', 'fx')
 
 
 def build(s, bar0, cycle, ch):
-    """16 小节母 loop(小节 = bar0 起),返回 bar0+16。
-    s: Score;bar0: 起始小节;cycle: 0/1(母 loop 第几次);ch: 角色→通道映射"""
+    """16 小节母 loop(小节 = bar0 起),返回 bar0+16。"""
     for r in ROLES:
         assert r in ch, f'riff_texture: 通道映射缺少角色 {r}'
 
@@ -77,100 +81,66 @@ def build(s, bar0, cycle, ch):
     def cc(role, val, rel):
         s.cc(role, 11, val, beat(rel, 0.0))
 
-    # ---------------- 档1(rel 0-3):氛围垫全程(角色化占比:不闪现) ----------------
+    # CC11 微弧(轮起点 80/82/84/82)
     for role in ROLES:
-        cc(role, 60, 0)
-    for rel in range(0, 4):
-        cname = ['Em', 'Em', 'C', 'D'][rel]
-        s.chord('synth_pad', CHOIR_VOICE[cname], 30, beat(rel, 0.0), 3.9)   # 氛围垫
-        if rel % 2 == 0:
-            r0 = PIANO_ROOT[cname]
-            s.note('piano_bang', r0, 38, beat(rel, 0.0), 0.3)               # 轻击
-            s.note('piano_bang', r0 + 12, 38, beat(rel, 0.0), 0.3)
+        for i, ccv in enumerate(CC11_TIER):
+            cc(role, ccv, i * 4)
 
-    # ---------------- 档2(rel 4-7):M2 刺刀 + 吉他轻刺点 + 钢琴每小节 ----------------
-    for rel in range(4, 8):
-        cname = ['Em', 'C', 'G', 'D'][rel - 4]
-        s.chord('synth_pad', CHOIR_VOICE[cname], 40, beat(rel, 0.0), 3.9)
-        s.chord('choir', CHOIR_VOICE[cname], 40, beat(rel, 0.0), 3.9)      # 合唱提前进场
-        s.note('guitar_dist', HOOK[cname][0], 50, beat(rel, 0.0), 0.3)     # 吉他刺点
-        s.note('guitar_dist', HOOK[cname][2], 50, beat(rel, 2.0), 0.3)
-        r0 = PIANO_ROOT[cname]
-        s.note('piano_bang', r0, 52, beat(rel, 0.0), 0.3)
-        s.note('piano_bang', r0 + 12, 52, beat(rel, 0.0), 0.3)
-    # 先现:档1 末(m6 beat2.0 起)低力度预击 3 音(避开 3.0 M3 齐击位),切入不突兀
-    for i, p in enumerate(M2[0][:3]):
-        s.note('brass_stab', p, 55, beat(3, 2.0 + i * 0.5), 0.35)
-    cc('brass_stab', 72, 4)
-    for rel in range(4, 8):
-        for i, p in enumerate(M2[(rel - 4) % 2]):
-            v = 70 + (8 if i == 3 else -4)
-            s.note('brass_stab', p, v, beat(rel, i * 0.5), 0.35)
+    # ---------------- 全程:pad/choir 长音(rel 3/7/11 缩 2.0 让位 riser) ----------------
+    for rel in range(16):
+        cname = CHORDS16[rel]
+        dur = 2.0 if rel in (3, 7, 11) else 3.9
+        s.chord('synth_pad', CHOIR_VOICE[cname], 42, beat(rel, 0.0), dur)
+        s.chord('choir', CHOIR_VOICE[cname], 50, beat(rel, 0.0), dur)
 
-    # ---------------- 档3(rel 8-11):全奏 ----------------
-    # 先现:档2 末(m10)铜管低力度预击(2.0/2.5/3.5,避开 3.0 M3 齐击)+ 吉他 2 音预击
-    for i, p in enumerate(M2[0][:2]):
-        s.note('brass_stab', p, 62, beat(7, 2.0 + i * 0.5), 0.35)
-    s.note('brass_stab', M2[0][0], 62, beat(7, 3.5), 0.35)
-    s.note('guitar_dist', HOOK['Em'][0], 48, beat(7, 2.5), 0.4)
-    s.note('guitar_dist', HOOK['Em'][1], 55, beat(7, 3.0), 0.4)
-    for role in ROLES:
-        cc(role, 84, 8)
-    for rel in range(8, 12):
-        cname = CHORDS[(rel - 8) % 4]
+    # ---------------- brass M2 全程 + M3(rel 3/7/11 @3.0) ----------------
+    for rel in range(16):
+        cell = M2[rel % 2]
+        for i, b in enumerate(M2_SLOTS):
+            s.note('brass_stab', cell[i], BRASS_VEL[i], beat(rel, b), 0.35)
+    for rel in (3, 7, 11):
+        s.note('brass_stab', 57, 96, beat(rel, 3.0), 0.3)   # M3 齐奏(与 timpani/kick/bass)
 
-        # M2 刺刀:4 音组尾音重音(vel 组 82/76/76/90),末小节整体渐弱
-        brass_base = 82 if rel < 11 else 60
-        for i, p in enumerate(M2[(rel - 8) % 2]):
-            v = brass_base + (8 if i == 3 else -4)
-            s.note('brass_stab', p, v, beat(rel, i * 0.5), 0.35)
+    # ---------------- rhythm 节奏层全程 ----------------
+    for rel in range(16):
+        cname = CHORDS16[rel]
+        for b in RHY_SLOTS:
+            s.chord('synth_rhythm', RHY_CHORD[cname], 70, beat(rel, b), 0.25)
 
-        # Hook:cycle 0 铺满全 riff;cycle 1 Em 小节微变、其余小节切分刺点
-        if cycle == 1 and cname != 'Em':
-            s.note('guitar_dist', GUITAR_STAB[cname][0], 70, beat(rel, 0.0), 0.3)
-            s.note('guitar_dist', GUITAR_STAB[cname][1], 70, beat(rel, 2.0), 0.3)
+    # ---------------- piano 0.0 锚点重击(全程) ----------------
+    for rel in range(16):
+        r0 = PIANO_ROOT[CHORDS16[rel]]
+        s.note('piano_bang', r0, 64, beat(rel, 0.0), 0.3)
+        s.note('piano_bang', r0 + 12, 64, beat(rel, 0.0), 0.3)
+
+    # ---------------- fx:每小节 0.0 低脉冲(57,电子心跳)+ 轮末 riser ----------------
+    for rel in range(16):
+        s.note('fx', 57, 42, beat(rel, 0.0), 0.22)
+    for rel in (3, 7, 11):
+        cname = CHORDS16[rel]
+        for j, p in enumerate(RISER[cname]):
+            s.note('fx', p, RISER_VEL[j], beat(rel, 2.0 + j * 0.25), 0.22)
+
+    # ---------------- hook 对话链(4 轮) ----------------
+    HOOK_MAIN = (82, 94, 82, 82, 94, 82, 72, 94)     # 重音 0.5/2.0/3.5;索引6(3.0)降 72——
+    #                                                 与 M3/bass 重音同槽,+BOOST/humanize 后 <84 不越互锁阈值
+    HOOK_TAIL = (76, 88, 76, 76, 88, 76, 76, 88)     # rel 15 减力(回环)
+    for rel in range(16):
+        cname = CHORDS16[rel]
+        k = rel % 4
+        if k == 1:
+            # bar2:缩刺点(让位 brass 插入 + bass 高把位应答)
+            s.note('hook', HOOK[cname][0], 70 + VOICE_BOOST, beat(rel, 0.5), 0.3)
+            s.note('hook', HOOK[cname][2], 70 + VOICE_BOOST, beat(rel, 2.5), 0.3)
         else:
             hook = list(HOOK[cname])
-            if cycle == 1 and cname == 'Em':          # 小节末 2 音降八度
-                hook[6], hook[7] = 64, 66
-            # 力度:3+3+2 重音分组(8分 [0,1,2][3,4,5][6,7],重音在 0/3/6)——去机械感;
-            # 首小节整体低 10 渐入,末小节渐出
-            if rel == 8:
-                ramp = (84, 74, 74, 84, 74, 74, 84, 72)
-            elif rel == 11:
-                ramp = (84, 74, 74, 84, 74, 74, 84, 66)
-            else:
-                ramp = (94, 82, 82, 94, 82, 82, 94, 78)
+            if rel == 4:                                # 轮2 bar1:尾 2 音降 8 度微变
+                hook[6], hook[7] = 64, 67
+            elif rel == 10:                             # 轮3 bar3:变奏(A5 经过音)
+                hook = list(HOOK_VAR)
+            ramp = HOOK_TAIL if rel == 15 else HOOK_MAIN
             for i, p in enumerate(hook):
-                s.note('guitar_dist', p, ramp[i], beat(rel, i * 0.5), 0.4)
-
-        # 合唱长音 + 合成垫叠置(m11 低力度渐入,m14 渐出)
-        choir_vel = 44 if rel == 8 else (48 if rel == 11 else 54)
-        pad_vel = 30 if rel == 8 else (34 if rel == 11 else 40)
-        s.chord('choir', CHOIR_VOICE[cname], choir_vel, beat(rel, 0.0), 3.9)
-        s.chord('synth_pad', CHOIR_VOICE[cname], pad_vel, beat(rel, 0.0), 3.9)
-
-        # 钢琴低音八度重击(第 1 拍;m11 轻、m14 更轻收束)
-        bang_vel = 56 if rel == 8 else (62 if rel == 11 else 70)   # 让位贝斯
-        r0 = PIANO_ROOT[cname]
-        s.note('piano_bang', r0, bang_vel, beat(rel, 0.0), 0.3)
-        s.note('piano_bang', r0 + 12, bang_vel, beat(rel, 0.0), 0.3)
-
-    # ---------------- M3 齐击:档2/档3 圈第 4 小节第 4 拍(rel 7、11) ----------------
-    for rel in (7, 11):
-        s.note('brass_stab', 59, 96, beat(rel, 3.0), 0.3)   # Bb3,与刺刀同区
-
-    # ---------------- 持续段(rel 12-13):轻层保持(吉他刺点/合唱/钢琴),无空闲 ----------------
-    for role in ROLES:
-        cc(role, 74, 12)
-    for rel in (12, 13):
-        s.chord('choir', CHOIR_VOICE['Em'], 46, beat(rel, 0.0), 3.9)
-        s.chord('synth_pad', CHOIR_VOICE['Em'], 40, beat(rel, 0.0), 3.9)
-        s.note('guitar_dist', HOOK['Em'][0], 60, beat(rel, 0.0), 0.3)
-        s.note('guitar_dist', HOOK['Em'][2], 60, beat(rel, 2.0), 0.3)
-        r0 = PIANO_ROOT['Em']
-        s.note('piano_bang', r0, 56, beat(rel, 0.0), 0.3)
-        s.note('piano_bang', r0 + 12, 56, beat(rel, 0.0), 0.3)
+                s.note('hook', p, ramp[i] + VOICE_BOOST, beat(rel, i * 0.5), 0.4)
 
     return bar0 + 16
 
@@ -178,12 +148,12 @@ def build(s, bar0, cycle, ch):
 if __name__ == '__main__':
     from lib.orch import Score
     from lib.progs import PROGS
-    SMOKE_CH = {'piano_bang': 0, 'synth_pad': 1, 'guitar_dist': 10,
-                'brass_stab': 12, 'choir': 14}
+    SMOKE_CH = {'piano_bang': 0, 'synth_pad': 1, 'hook': 10,
+                'brass_stab': 12, 'choir': 14, 'synth_rhythm': 15, 'fx': 7}
     s = Score()
     for role, chn in SMOKE_CH.items():
         bank, prog, (lo, hi), pan, rev = PROGS[role]
         s.add_instr(role, chn, bank, prog, lo, hi, pan, rev)
     build(s, 3, 0, SMOKE_CH)
-    s.flush('/tmp/smk_riff.mid')
-    print('冒烟:build(s, 3, 0, ch) → /tmp/smk_riff.mid(期望 0 音区告警 / 0 冲突)')
+    s.flush('/tmp/smk_riff_v7.mid')
+    print('冒烟:build(s, 3, 0, ch) → /tmp/smk_riff_v7.mid(期望 0 音区告警 / 0 冲突)')

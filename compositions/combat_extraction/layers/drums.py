@@ -1,16 +1,15 @@
 #!/usr/bin/env python3
-"""drums.py — M1 节奏动机全谱(档1/2/3 + 呼吸):16 小节母 loop(规划 §2/§3)。
+"""drums.py — 打击乐层(高潮段满配版):kick/snare/hat/幽灵音/fill/timpani
 
-角色:'drums'(ch9,GM 鼓:36 kick / 38 snare / 42 hat / 49 crash)。
-档位(相对 bar0):
-  i=0..3   档1  kick 3+3+2(0.0/1.5/3.0)+ snare 2/4 拍 + hat 8分 + 档起点 crash  CC11 60
-  i=4..7   档2  同档1 + hat 16分 + m10 末 1 拍 16分 snare fill                  CC11 72
-  i=8..11  档3  kick 8分驱动(3+3+2 重音在 0.0/1.5/3.0)+ snare 2/4 + 每小节起点
-                crash + m14 末 2 拍 16分 fill                                   CC11 84
-  i=12..15 呼吸  kick 减半(每 2 拍一发)+ hat 8分,snare/cymbal 抽离               CC11 66
-cycle=1 微变(§6 允许):kick 力度 +3;m10 fill → 2 拍 3+3+2 十六分滚奏;
-m14 fill → 32分滚奏。
-循环工程(§7):m18(i=15)第 4 拍无重音/新事件;呼吸段能量回落不归零。
+母节 = 高潮段(用户决策):16 小节全程满配,无档位。16 小节 = 4 轮对话链。
+- kick:8 分驱动,3+3+2 重音(0.0/1.5/3.0),全程;m18(rel 15)第 4 拍省略(回环)
+- snare:2/4 拍背拍,全程
+- hat:16 分,全程
+- 幽灵音:每轮 bar1-3(rel 0-2/4-6/8-10/12-14)的 0.25/1.75/2.25/3.75(bar4 让位 fill/M3)
+- crash:轮起点 rel 0/4/8/12
+- fill:rel 7/11 末(cycle0:16 分 8 音;cycle1:32 分滚奏)
+- timpani:全程 2.0 根音重击(轮力度 66/70/74/72)+ M3 齐击(rel 3/7/11 @3.0,38,78)
+CC11 全程 80-84 微弧(轮起点 80/82/84/82)——GUGS 响应 CC11,低值会让音色静音
 """
 import contextlib
 import io
@@ -22,6 +21,13 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from lib.orch import Score
 from lib.progs import PROGS
 
+# 16 小节和弦序(4 轮:轮1 Em Em C D,轮2-4 Em C G D)
+CHORDS16 = ('Em', 'Em', 'C', 'D', 'Em', 'C', 'G', 'D',
+            'Em', 'C', 'G', 'D', 'Em', 'C', 'G', 'D')
+TIMP_ROOT = {'Em': 40, 'C': 36, 'G': 31, 'D': 38}
+TIMP_VEL = (66, 70, 74, 72)          # 轮 1-4 的 2.0 重击力度(微弧)
+CC11_TIER = (80, 82, 84, 82)         # 轮起点 CC11(无档位落差,80-84 微弧)
+
 
 def build(s, bar0, cycle, ch):
     """写 16 小节母 loop(bar0 起,即 m3-18),cycle=0/1。返回 bar0+16。"""
@@ -31,80 +37,50 @@ def build(s, bar0, cycle, ch):
     def B(i, b):
         return base + i * 4 + b            # loop 内第 i 小节、小节内拍 b
 
-    # ---------- 档1 (i=0..3): 骨架 kick 3+3+2 + 背拍 + hat 8分 ----------
-    s.cc('drums', 11, 60, B(0, 0.0))
-    for i in range(4):
-        for b in (0.0, 1.5, 3.0):
-            s.note('drums', 36, 88 + dk, B(i, b), 0.2)     # kick 3+3+2
-        for b in (1.0, 3.0):
-            s.note('drums', 38, 84, B(i, b), 0.2)          # snare 2/4 拍
-        for j in range(8):
-            s.note('drums', 42, 60, B(i, j * 0.5), 0.15)   # hat 8分
-    s.note('drums', 49, 88, B(0, 0.0), 1.2)                # m3 起点 crash
+    # CC11 微弧(轮起点 80/82/84/82)
+    for i, ccv in enumerate(CC11_TIER):
+        s.cc('drums', 11, ccv, B(i * 4, 0.0))
 
-    # ---------- 档2 (i=4..7): + hat 16分 + m10 fill ----------
-    s.cc('drums', 11, 72, B(4, 0.0))
-    for i in range(4, 8):
-        for b in (0.0, 1.5, 3.0):
-            s.note('drums', 36, 94 + dk, B(i, b), 0.2)
-        for b in ((1.0,) if i == 7 else (1.0, 3.0)):       # m10 背拍 3.0 让给 fill
-            s.note('drums', 38, 90, B(i, b), 0.2)
-        for j in range(16):
-            s.note('drums', 42, 66, B(i, j * 0.25), 0.15)  # hat 16分
-    s.note('drums', 49, 94, B(4, 0.0), 1.2)                # m7 起点 crash
-    if cycle == 0:
-        # m10 末 1 拍 16分 snare fill + kick 预击(渐强,直入档3 密度翻倍)
-        for j in range(4):
-            s.note('drums', 38, 90, B(7, 3.0 + j * 0.25), 0.2)
-        for j in range(3):
-            s.note('drums', 36, 72 + j * 6, B(7, 3.25 + j * 0.25), 0.2)
-    else:
-        # m10: 2 拍 3+3+2 十六分滚奏(重音在 16分位 0/3/6 → 拍 2.0/2.75/3.5)+ kick
-        for j in range(8):
-            vel = 94 if j in (0, 3, 6) else 84
-            s.note('drums', 38, vel, B(7, 2.0 + j * 0.25), 0.2)
-        for j in range(3):
-            s.note('drums', 36, 60 + j * 8, B(7, 3.25 + j * 0.25), 0.2)
-
-    # ---------- 档3 (i=8..11): kick 8分驱动 + 每小节 crash + m14 fill ----------
-    s.cc('drums', 11, 84, B(8, 0.0))
-    for i in range(8, 12):
-        for j in range(8):
-            b = j * 0.5
-            vel = 104 + dk if b in (0.0, 1.5, 3.0) else 92 + dk
-            s.note('drums', 36, vel, B(i, b), 0.2)         # 8分驱动,3+3+2 重音
-        for b in ((1.0,) if i == 11 else (1.0, 3.0)):      # m14 背拍让给 fill
-            s.note('drums', 38, 98, B(i, b), 0.2)
-        for j in range(16):
-            s.note('drums', 42, 72, B(i, j * 0.25), 0.15)
-        s.note('drums', 49, 100, B(i, 0.0), 1.2)           # 每小节起点 crash
-    if cycle == 0:
-        # m14 末 2 拍 16分 fill(2.0/3.0 背拍收进 fill 重音)
-        for j in range(8):
-            vel = 98 if j in (0, 4) else 90
-            s.note('drums', 38, vel, B(11, 2.0 + j * 0.25), 0.2)
-    else:
-        # m14: 2 拍 32分滚奏(2.0/3.0 重音)
-        for j in range(16):
-            vel = 98 if j in (0, 8) else 92
-            s.note('drums', 38, vel, B(11, 2.0 + j * 0.125), 0.09)
-
-    # ---------- 持续段 (i=12..15): 鼓全程在场(用户要求:不搞空闲段) ----------
-    # kick 8 分驱动 + 3+3+2 重音 + snare 2/4 + hat 16 分,仅略轻于档3;
-    # 末小节(m18)第 4 拍省略 kick 重音(循环工程:回环衔接柔和)
-    s.cc('drums', 11, 76, B(12, 0.0))
-    for i in range(12, 16):
+    # ---------- 全程骨架:kick 8分(3+3+2 重音)+ snare 2/4 + hat 16分 ----------
+    for i in range(16):
         for j in range(8):
             b = j * 0.5
             if i == 15 and b == 3.0:
-                continue                          # m18 第 4 拍无重音
-            vel = 88 + dk if b in (0.0, 1.5, 3.0) else 80 + dk
+                continue                          # m18 第 4 拍无重音(回环)
+            vel = 104 + dk if b in (0.0, 1.5, 3.0) else 92 + dk
             s.note('drums', 36, vel, B(i, b), 0.2)
-        for b in (1.0, 3.0):
-            s.note('drums', 38, 88 + dk, B(i, b), 0.2)
+        for b in ((1.0,) if i in (7, 11) else (1.0, 3.0)):   # rel 7/11 的 3.0 背拍让位 fill
+            s.note('drums', 38, 98 + dk, B(i, b), 0.2)
         for j in range(16):
-            s.note('drums', 42, 66, B(i, j * 0.25), 0.15)
-    s.note('drums', 49, 88, B(12, 0.0), 1.0)      # 持续段起点 crash
+            s.note('drums', 42, 72, B(i, j * 0.25), 0.15)
+
+    # ---------- 幽灵音:每轮 bar1-3(bar4 让位 fill/M3/riser) ----------
+    for i in (0, 1, 2, 4, 5, 6, 8, 9, 10, 12, 13, 14):
+        for j in (1, 7, 9, 15):
+            s.note('drums', 38, 45, B(i, j * 0.25), 0.1)
+
+    # ---------- crash:轮起点(rel 0/4/8/12) ----------
+    for i in (0, 4, 8, 12):
+        s.note('drums', 49, 96, B(i, 0.0), 1.0)
+
+    # ---------- fill:rel 7/11 末(轮 2/3 收束,推进下一轮) ----------
+    if cycle == 0:
+        for rel in (7, 11):
+            for j in range(8):                       # 16 分 8 音(2.0-3.75)
+                vel = 98 if j in (0, 4) else 90
+                s.note('drums', 38, vel, B(rel, 2.0 + j * 0.25), 0.2)
+    else:
+        for rel in (7, 11):                          # cycle1:32 分滚奏变体
+            for j in range(16):
+                vel = 98 if j in (0, 8) else 92
+                s.note('drums', 38, vel, B(rel, 2.0 + j * 0.125), 0.09)
+
+    # ---------- timpani:全程 2.0 根音重击 + M3 齐击(rel 3/7/11) ----------
+    for i in range(16):
+        s.note('timpani', TIMP_ROOT[CHORDS16[i]], TIMP_VEL[i // 4], B(i, 2.0), 0.4)
+    for rel in (3, 7, 11):
+        s.note('timpani', 38, 78, B(rel, 3.0), 0.4)   # M3:D2 与 brass/kick/bass 齐奏
+    # rel 15(m18)无 M3 —— 回环工程:m18 第 4 拍无重音
 
     return bar0 + 16
 
@@ -112,8 +88,9 @@ def build(s, bar0, cycle, ch):
 if __name__ == '__main__':
     ch = {'drums': 9, 'bass_electric': 6, 'timpani': 11}
     s = Score()
-    bank, prog, (lo, hi), pan, rev = PROGS['drums']
-    s.add_instr('drums', ch['drums'], bank, prog, lo, hi, pan, rev)
+    for name, c in ch.items():
+        bank, prog, (lo, hi), pan, rev = PROGS[name]
+        s.add_instr(name, c, bank, prog, lo, hi, pan, rev)
     buf = io.StringIO()
     with contextlib.redirect_stdout(buf):
         build(s, 3, 0, ch)     # 圈 1(cycle=0)

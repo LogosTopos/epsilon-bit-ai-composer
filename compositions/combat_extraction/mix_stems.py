@@ -24,7 +24,7 @@ STEMS = [
     ('drums',      [9, 11]),
     ('bass',       [6]),
     ('strings',    [2, 3, 4, 5]),
-    ('stab',       [10, 12]),
+    ('stab',       [10, 12, 7, 15]),   # v7:hook/brass + fx(7) + synth_rhythm(15)
     ('atmosphere', [0, 1, 13, 14]),
 ]
 
