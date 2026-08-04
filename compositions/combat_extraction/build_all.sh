@@ -33,6 +33,10 @@ python3 encode_mp3.py stems/_mix_playthrough.wav Combat_Extraction_Playthrough.m
 echo "=== [5/5] 无缝大循环(可单曲循环,首尾无缝) ==="
 python3 sections/build_loop.py >/dev/null
 python3 mix_stems.py --mid Combat_Extraction_Loop.mid --render-stems --out stems/_mix_loop.wav
-python3 encode_mp3.py stems/_mix_loop.wav Combat_Extraction_Loop.mp3 --title "搜打撤 无缝大循环"
+# 循环成品必须裁掉 FluidSynth 混响尾(2026-08-05 用户反馈末尾静音):
+# 裁到 MIDI 实际长度 + 0.15s,循环播放时音乐结束后直接回开头,无静音带
+LOOP_DUR=$(python3 -c "import mido; print(f'{mido.MidiFile(\"Combat_Extraction_Loop.mid\").length + 0.15:.2f}')")
+ffmpeg -y -loglevel error -i stems/_mix_loop.wav -t "$LOOP_DUR" -c:a pcm_s16le stems/_mix_loop_trim.wav
+python3 encode_mp3.py stems/_mix_loop_trim.wav Combat_Extraction_Loop.mp3 --title "搜打撤 无缝大循环"
 
 echo "=== 完成:全部成品已重建 ==="

@@ -243,26 +243,30 @@ def harmony_prehang(s, bar0, ch, **kw):
 def loop_return(s, bar0, ch, **kw):
     """2 小节:循环预伏(无缝回环,S6→S1 专用,2026-08-05 设计)。
     原理:循环点两侧 = 两个相同小节(loop_return 末小节 ≡ S1 首小节逐字复刻),
-    和声 Em→Em 连续(全段共享骨架),能量从 S6 余烬经 1 小节静息回升到 S1 档。
-    小节 1(静息延续):弦乐/pad/choir Em 长音恢复(vel 34/28/32,承接 S6 余烬),
-    bass 根音轻留(28,vel 50);小节 2(S1 rel0 复刻):bass 8 分脉冲
-    (28,28,40,28,28,40,28,35,vel 82-96)+ kick 每拍 70 + snare 2/4 58 + hat 8 分 48
-    + crash 轻 70 + 弦乐长音 40 + pad/choir 30/36 + piano 锚 40/52 + vln1 回声。"""
+    和声 Em→Em 连续(全段共享骨架),能量从 S6 余烬经 1 小节预伏回升到 S1 档。
+    小节 1(心跳预伏,v2 2026-08-05 用户反馈'末尾空白'后改):kick 每拍轻(52)
+    + bass 根音 8 分脉冲(28,vel 60)+ 弦乐长音(38)——'脉搏重现',不留静音区;
+    小节 2(S1 rel0 复刻):bass 8 分脉冲(28,28,40,28,28,40,28,35,vel 82-96)
+    + kick 每拍 70 + snare 2/4 58 + hat 8 分 48 + crash 轻 70 + 弦乐长音 40
+    + pad/choir 30/36 + piano 锚 40/52 + vln1 回声。"""
     for r in ('bass_electric', 'drums', 'celli', 'vla', 'vln2', 'vln1',
               'synth_pad', 'choir', 'piano_bang'):
         assert r in ch, f'loop_return: 通道映射缺少角色 {r}'
     t0 = (bar0 - 1) * 4
-    # ---- 小节 1:静息延续(Em 长音恢复,CC11 回升 78-80)----
+    # ---- 小节 1:心跳预伏(脉搏重现,能量爬升)----
     for r in ('bass_electric', 'celli', 'vla', 'vln2', 'vln1',
               'synth_pad', 'choir', 'piano_bang', 'drums'):
         s.cc(r, 11, 78, t0)
-    s.note('celli', 40, 34, t0, 3.9)
-    s.note('vla', 64, 34, t0, 3.9)
-    s.note('vln2', 64, 34, t0, 3.9)
-    s.note('vln1', 71, 34, t0, 3.9)
-    s.chord('synth_pad', (52, 55, 64), 28, t0, 3.9)
-    s.chord('choir', (52, 55, 64), 32, t0, 3.9)
-    s.note('bass_electric', 28, 50, t0, 2.0)     # 根音轻留(心跳隐现)
+    for b in (0.0, 1.0, 2.0, 3.0):
+        s.note('drums', 36, 52, t0 + b, 0.2)         # kick 每拍轻(心跳重现)
+    for j in range(8):
+        s.note('bass_electric', 28, 60, t0 + j * 0.5, 0.35)   # bass 根音 8 分脉冲
+    s.note('celli', 40, 38, t0, 3.9)
+    s.note('vla', 64, 38, t0, 3.9)
+    s.note('vln2', 64, 38, t0, 3.9)
+    s.note('vln1', 71, 38, t0, 3.9)
+    s.chord('synth_pad', (52, 55, 64), 30, t0, 3.9)
+    s.chord('choir', (52, 55, 64), 34, t0, 3.9)
     # ---- 小节 2:S1 rel0 逐字复刻(与 sections/s1_scavenge.py 首小节一致)----
     t1 = t0 + 4
     for r in ('bass_electric', 'celli', 'vla', 'vln2', 'vln1',
