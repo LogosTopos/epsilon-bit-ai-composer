@@ -12,9 +12,11 @@
 用法:python3 mix_stems.py [--out 成品.wav] [--render-stems]
 """
 import argparse
+import hashlib
 import os
 import subprocess
 import sys
+from concurrent.futures import ThreadPoolExecutor
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
@@ -66,6 +68,32 @@ def split_stems(mid_path, out_dir):
     return paths
 
 
+def _sf_sig():
+    """音色库签名(内容哈希,库文件变更 → 全部重渲染)。"""
+    h = hashlib.sha256()
+    for p in SF2S:
+        try:
+            with open(p, 'rb') as f:
+                h.update(f.read())
+        except FileNotFoundError:
+            h.update(p.encode())
+    return h.hexdigest()
+
+
+def _stale(mid_path, wav_path):
+    """增量缓存判定:mid 内容 + 音色库签名一致且 wav 存在 → 不重渲染。
+    (E Agent 审计:旧逻辑只看 wav 是否存在,而 build.sh 总是 rm,缓存形同虚设;
+    双版仅 stab 组不同 → 第二版只重渲染 1/5,实测省 75%)"""
+    if not os.path.exists(wav_path):
+        return True
+    h = hashlib.sha256(open(mid_path, 'rb').read() + _sf_sig().encode()).hexdigest()
+    hp = wav_path + '.hash'
+    try:
+        return open(hp).read().strip() != h
+    except FileNotFoundError:
+        return True
+
+
 def render(src_mid, out_wav):
     cmd = ['fluidsynth', '-F', out_wav, '-r', '44100', '-R', '0.9', '-C', '0', '-g', '1.2']
     cmd += SF2S + [src_mid]
@@ -98,11 +126,23 @@ def main():
     os.makedirs('stems', exist_ok=True)
     if args.render_stems:
         paths = split_stems(args.mid, 'stems')
-        for name, _ in STEMS:
-            wav = f'stems/stem_{name}.wav'
-            if not os.path.exists(wav):
-                print(f'渲染 {name}...')
-                render(paths[name], wav)
+        # 增量缓存 + 并行渲染(E Agent 审计:串行→并行实测 2.46×,md5 逐字节一致)
+        todo = [(name, wav, mid) for name, mid in paths.items()
+                for wav in [f'stems/stem_{name}.wav']
+                if _stale(mid, wav)]
+        for name, _, _ in todo:
+            print(f'渲染 {name}...')
+
+        def _render(item):
+            name, wav, mid = item
+            render(mid, wav)
+            h = hashlib.sha256(open(mid, 'rb').read() + _sf_sig().encode()).hexdigest()
+            open(wav + '.hash', 'w').write(h)
+        if todo:
+            with ThreadPoolExecutor(max_workers=5) as ex:
+                list(ex.map(_render, todo))
+        else:
+            print('  (全部命中增量缓存,跳过渲染)')
     mix(args.out)
     import wave, audioop, math
     with wave.open(args.out, 'rb') as w:
