@@ -39,15 +39,18 @@
 | 成品 | 文件 | 说明 |
 |---|---|---|
 | 母节 v9(主成品) | `Combat_Extraction.mp3` | 168 BPM / E 小调 / 14 层满配高潮段 / 可无缝循环(22.9s) |
+| **无缝大循环(推荐听)** | `Combat_Extraction_Loop.mp3` | **3:03 宏观框架版**:4 幕×32 小节×8 小节演化档,单一连续发展(起承转合),首尾无缝可单曲循环;`build_loop.py --cycle N` 遍间轮转 |
 | 《搜-打-撤 v1》 | `Combat_Extraction_SDC_v1.mp3` | 完整流程成品:S1 搜刮 → 母节战斗 ×2 → S6 结算(1:42) |
-| 六子节连播 demo | `Combat_Extraction_Playthrough.mp3` | 六种音乐人格 + 六种转场完整串演(3:01) |
-| 子节 S1-S6 | `S1_Scavenge.mp3` 等 | 搜刮/探索/危机/撤离/结算,每节独立可试听 |
+| 六子节连播 demo | `Combat_Extraction_Playthrough.mp3` | 六种音乐人格 + 动机桥转场完整串演(3:01) |
+| 子节 S1/S2/S6 | `S1_Scavenge.mp3` 等 | 搜刮/警觉/尘埃落定,独立可试听 |
+| 子节 S4/S5 v2(红线重做) | `S4_Crisis_v2.mp3` `S5_Extract_v2.mp3` | 绝境压迫(心率 kick,弃移调)/ 逃亡冲刺(176+32 分 hat,弃叠置) |
+| 子节 S-BT(子弹时间) | `S_BT.mp3` | 时停用曲:心跳 kick 双发 + 时间晶体弧线,168 恒速 |
 | stems 交付 | `export_stems.py` 生成 | 24-bit 单圈 loop stems,供 FMOD/Wwise/Godot 垂直混音 |
 
 **核心设计(母节/子节体系)**:
 - **母节 = 游戏高潮段**:16 小节全程满配(14 层:鼓/贝斯/4 弦乐/pad/合唱/钢琴/hook/铜管/定音鼓/节奏层/fx),无起承转合——起承转合全部留给子节
-- **子节 = 人格化变体**:S1 低音入场 / S2 行进警觉 / S4 绝境压迫 / S5 逃亡冲刺 / S6 尘埃落定——每个子节有独立音乐人格(重写乐句,音高取母节素材原位)
-- **转场 = 插入式过渡小节**:riser 升档 / down_fx 降档 / roll32 冲刺 / crash_stop 急停 / 和声预挂,衔接矩阵 36 键
+- **子节 = 人格化变体**:S1 低音入场 / S2 行进警觉 / S4 绝境压迫(v2 弃移调)/ S5 逃亡冲刺(v2 弃叠置)/ S6 尘埃落定 / S-BT 子弹时间——每个子节有独立音乐人格(重写乐句,音高取母节素材原位)
+- **转场 = 动机桥(大循环/demo 用)**:step_up 步态渐变 / engine_start 引擎启动 / morph_crisis 满配塌缩 / accel_roll 加速滚奏——素材取自相邻段落,节奏密度渐变,听感为段落自然变形;riser/down_fx/roll32/crash_stop 保留为简单场景与反向衔接
 - **游戏集成(已落地)**:Godot 4.6 的 MusicManager 状态机(菜单/战斗/结算三态 + 时停低通 + 热量加成 + 高波变奏 + 击杀 stinger)
 
 ### 已完成作品(早期)
@@ -90,8 +93,8 @@
 ```bash
 cd compositions/combat_extraction
 
-# 一键全量构建(母节双版 + 全部子节 + SDC v1 + 连播 demo)
-./build_all.sh            # 并行渲染 + 增量缓存 + 校验门 + TP 压码,约 24s
+# 一键全量构建(母节双版 + 全部子节含 v2/S-BT + SDC v1 + 连播 demo + 无缝大循环)
+./build_all.sh            # 并行渲染 + 增量缓存 + 校验门 + TP 压码,约 30s(循环成品自动裁混响尾)
 
 # 单个母节构建(双版 + 审计 + 渲染混音 + 压码 + 主成品复制)
 ./build.sh
@@ -113,7 +116,7 @@ fluidsynth -F out.wav -r 44100 -R 0.9 -C 0 -g 1.2 \
 ├── compositions/              # 作品(每曲一目录:脚本+MIDI+WAV+MP3+说明)
 │   └── combat_extraction/     # 《搜打撤》战斗曲(当前活跃)
 │       ├── layers/            # 母节三层(鼓/贝斯和声/纹理)
-│       ├── sections/          # 子节体系(transitions 转场库 + S1-S6 + SDC v1)
+│       ├── sections/          # 子节体系(transitions 12 元素 + 子节 S1-S6/S-BT + SDC v1 + build_loop 大循环)
 │       ├── lib/               # Score API / 音色映射
 │       ├── docs/              # STATUS(权威交接)/ 架构 / 设计 / 教程 / Mac 移植
 │       ├── audit_v7.py        # 五维验收审计

@@ -13,7 +13,7 @@ ROLE_CH),按游戏流程把 S1→S2→S3→S4→S3→S5→S6 七个子节段用*
 转场位置与时长预估由 STEPS 规划表统一驱动(打印结构 = 实际组装,不会漂移);
 所用转场逐一与 TRANSITIONS 衔接矩阵交叉校验(不一致即断言失败)。
 
-并行 Agent 交付模块(sections.s2_explore / s4_crisis / s5_extract / s6_calm)
+交付模块(sections.s2_explore / s4_crisis_v2 / s5_extract_v2 / s6_calm)
 可能尚未生成:缺失时 main() 打印规划结构后以非零码退出(冒烟跳过 demo 执行),
 代码本身已就绪,S2/S4/S5/S6 落地后即可直接运行。
 
@@ -40,8 +40,8 @@ import layers.riff_texture as L_riff
 _MISSING = None
 try:
     import sections.s2_explore as S2
-    import sections.s4_crisis as S4
-    import sections.s5_extract as S5
+    import sections.s4_crisis_v2 as S4   # v2(红线重做版,旧版已归档 deprecated_s4_s5)
+    import sections.s5_extract_v2 as S5
     import sections.s6_calm as S6
 except ImportError as _e:
     S2 = S4 = S5 = S6 = None
@@ -51,7 +51,7 @@ SECTIONS_READY = all(m is not None for m in (S2, S4, S5, S6))
 ROLE_CH = compose.ROLE_CH
 
 # 连播规划表:(区块名, 类型, 小节数, BPM)。类型 → 组装函数;bpm 仅用于时长预估
-# (S5 的 176 由 s5_extract.build 内部写 tempo;crash_stop 的 168 由 tempo=168 写回)。
+# (S5 v2 的 176 由 s5_extract_v2.build 内部写 tempo;crash_stop 的 168 由 tempo=168 写回)。
 # S3(母节)直接调 layers/drums.py + bass_harmony.py + riff_texture.py 的 build 充当。
 STEPS = [
     ('S1 搜刮',        'S1',        16, 168),
@@ -173,7 +173,7 @@ def main():
 
     if not SECTIONS_READY:
         print(f'[demo] 冒烟跳过 demo 执行:并行 Agent 模块未交付({_MISSING});'
-              f'代码就绪,待 sections/s2_explore.py、s4_crisis.py、s5_extract.py、'
+              f'代码就绪,待 sections/s2_explore.py、s4_crisis_v2.py、s5_extract_v2.py、'
               f's6_calm.py 落地后直接运行。')
         sys.exit(1)
 

@@ -22,8 +22,15 @@ stinger/游戏内教程/死亡界面/K 键触控板适配),仓库已推 GitHub(L
 |---|---|
 | `Combat_Extraction.mid/.mp3` | **主成品 = 母节 v9 合成器版**(Hook = 方波 0/80,stab 完全辅助化) |
 | `Combat_Extraction_v9_trumpet.mid/.mp3` | 小号版(对比保留,用户听感:合成器 > 小号) |
-| `S1_Scavenge.mid/.mp3` | **子节 1《低音入场版》**(搜刮/开场氛围) |
-| `Combat_Extraction_Loop.mid/.mp3` | **无缝大循环成品(3:23,可单曲循环,首尾无缝,开头无留白)**——S1→S2→母节→S-BT→母节→S4→S5→S6→loop_return 回 S1;`build_loop.py --cycle N` 遍间轮转;转场全部为动机桥 |
+| `S1_Scavenge.mid/.mp3` | 子节 1《低音入场》(搜刮/开场氛围) |
+| `S2_Explore.mid/.mp3` | 子节 2《行进警觉》 |
+| `S4_Crisis_v2.mid/.mp3` | **子节 4《绝境压迫》红线重做版**(心率 kick 双发 + bass/hook 原位;旧版已归档) |
+| `S5_Extract_v2.mid/.mp3` | **子节 5《逃亡冲刺》红线重做版**(176 BPM + 32 分 hat,无叠置;旧版已归档) |
+| `S6_Calm.mid/.mp3` | 子节 6《尘埃落定》 |
+| `S_BT.mid/.mp3` | **子节 S-BT《子弹时间》**(时停用:心跳 kick 双发 + 时间晶体弧线,168 恒速) |
+| `Combat_Extraction_Loop.mid/.mp3` | **无缝大循环成品 v3(3:03,可单曲循环)**——128 小节宏观框架版:4 幕×32 小节×8 小节演化档,单一连续发展(非段落拼贴),素材 100% 母节体系,循环点自然闭合;`build_loop.py --cycle N` 遍间轮转 |
+| `Combat_Extraction_SDC_v1.mid/.mp3` | 搜-打-撤完整版 1:42(S1→母节×2→S6) |
+| `Combat_Extraction_Playthrough.mid/.mp3` | 六子节连播 demo 3:01(动机桥转场,已切 S4/S5 v2) |
 | `stems/stem_*.wav` | 5 组 stems 混音缓存(改层后必须删了重渲染) |
 
 ## 2. 音乐架构(定稿,勿改大方向)

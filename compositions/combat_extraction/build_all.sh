@@ -14,8 +14,8 @@ fi
 echo "=== [1/4] 母节双版(build.sh)==="
 ./build.sh
 
-echo "=== [2/4] 子节独立成品 ==="
-for f in S1_Scavenge S2_Explore S4_Crisis S5_Extract S6_Calm; do
+echo "=== [2/4] 子节独立成品(v2 红线重做 + S-BT;旧 S4/S5 已归档) ==="
+for f in S1_Scavenge S2_Explore S4_Crisis_v2 S5_Extract_v2 S6_Calm S_BT; do
   python3 mix_stems.py --mid $f.mid --render-stems --out stems/_mix_$f.wav
   python3 encode_mp3.py stems/_mix_$f.wav $f.mp3 --title "$f"
 done

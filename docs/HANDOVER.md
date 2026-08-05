@@ -57,10 +57,11 @@
 |---|---|---|
 | 母节 v9 双版 | Combat_Extraction(.mid/.mp3)+ v9_synth/v9_trumpet | 主成品 = 合成器版 |
 | SDC v1 | Combat_Extraction_SDC_v1.mid/.mp3 | 搜-打-撤完整版 1:42 |
-| 六子节 | S1-S6 各 .mid/.mp3 | S4/S5 待重做 |
-| 连播 demo | Combat_Extraction_Playthrough.mid/.mp3 | 3:01 |
-| 转场库 | sections/transitions.py | 5 元素 + 矩阵 |
-| 渲染链路 v2 | build_all.sh / build.sh / mix_stems.py / encode_mp3.py / export_stems.py / audit_v7.py | 一键全量 24s |
+| 子节成品 | S1/S2/S6 + **S4/S5 v2(红线重做)** + **S-BT(子弹时间)** | 旧 S4/S5 已归档 → archive/combat_extraction/deprecated_s4_s5/ |
+| 连播 demo | Combat_Extraction_Playthrough.mid/.mp3 | 3:01(动机桥转场,已切 v2) |
+| **无缝大循环** | Combat_Extraction_Loop.mid/.mp3 | **3:03,128 小节宏观框架版(4 幕×32 小节×8 小节演化档,单一连续发展非拼贴),循环点自然闭合,可单曲循环**;build_loop.py --cycle N |
+| 转场库 | sections/transitions.py | 12 元素:5 基础 + time_fold/unfold + loop_return + 4 动机桥(step_up/engine_start/morph_crisis/accel_roll);衔接矩阵 14 条 |
+| 渲染链路 v2 | build_all.sh / build.sh / mix_stems.py / encode_mp3.py / export_stems.py / audit_v7.py | 一键全量;循环成品自动裁混响尾 |
 | 文档 | docs/STATUS.md(权威)/ ARCHITECTURE / THERMOCLINE_MUSIC_DESIGN / BLINK_ARCHITECTURE / BLINK_MAC_PORT / BLINK_TUTORIAL |
 | 归档 | GAME_THERMOCLINE(集成规划,已被 BLINK_ARCHITECTURE 取代)/ COMPOSITION_PLAN / DIAGNOSIS_v6 / PLAN_v7 / ROADMAP → archive/combat_extraction/pre_status_docs/ | |
 
